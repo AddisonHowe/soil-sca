@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mysca"
+dynamic = ["version"]
+requires-python = ">= 3.8"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+description = "An implementation of the SCA pipeline."
+authors = [
+  {name = "Addison Howe"},
+]
+dependencies = [
+  "numpy",
+  "scipy",
+  "scikit-learn",
+  "pandas",
+  "matplotlib",
+  "biopython",
+  "tqdm",
+  "ipykernel",
+  "ipywidgets",
+]
+
+[project.scripts]
+mysca = "mysca.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]

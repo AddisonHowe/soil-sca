@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python
+  - numpy
+  - scipy
+  - scikit-learn
+  - pandas
+  - matplotlib
+  - biopython
+  - tqdm
+  - ipykernel
+  - ipywidgets
+  
