@@ -159,9 +159,9 @@ def preprocess_msa(
     for i, s in enumerate(msa):
         similarities = np.sum(s == msa, axis=1) / msa.shape[1]
         screen = similarities >= sequence_similarity_thresh
-        print(screen.sum())
         ws[i] = 1 / screen.sum()
     
-    print(f"Effective sample size (sum of weights): {ws.sum()}")
+    if verbosity:
+        print(f"Effective sample size (sum of weights): {ws.sum()}")
 
     return msa, xmsa, seqids, ws, retained_sequences, retained_positions, ref_results
