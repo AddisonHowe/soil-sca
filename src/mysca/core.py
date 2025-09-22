@@ -80,6 +80,7 @@ def run_sca(
 
     if return_keys == "all":
         results["fi0"] = fi0
+        results["fia"] = fia
         results["fijab"] = fijab
         results["Dia"] = Dia
         results["Di"] = Di

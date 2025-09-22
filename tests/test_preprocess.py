@@ -27,6 +27,7 @@ TEST_MSA2 = f"{DATDIR}/msas/msa02.faa"
 TEST_MSA3 = f"{DATDIR}/msas/msa03.faa"
 TEST_MSA4 = f"{DATDIR}/msas/msa04.faa"
 TEST_MSA5 = f"{DATDIR}/msas/msa05.faa"
+TEST_MSA6 = f"{DATDIR}/msas/msa06.faa"
 
         
 ###############################################################################
@@ -177,6 +178,21 @@ TEST_MSA5 = f"{DATDIR}/msas/msa05.faa"
         [f"msa05_sequence{i}" for i in 
          [0,1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,20]
         ],
+    ],
+
+    # Test MSA: msa06.faa
+    [
+        TEST_MSA6, SYMMAP2,
+        0.4, 0.2, 
+        "msa06_sequence0", 0.2, 
+        0.8, 0.2, 
+        np.arange(20),
+        np.array([0,1,2,3,4]), 
+        np.array([
+            0.2, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.2, 0.2, 0.2, 
+            0.2, 0.2, 0.2, 0.2, 0.2, 0.5, 0.333333333, 0.333333333, 0.333333333
+        ]),
+        [f"msa06_sequence{i}" for i in np.arange(20)],
     ],
 
 ])
