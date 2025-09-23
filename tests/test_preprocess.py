@@ -229,7 +229,7 @@ def test_preprocessing(
         verbosity=2
     )
 
-    msa, xmsa, seqids, weights, retained_sequences, retained_positions, _ = results
+    _, _, seqids, weights, _, retained_sequences, retained_positions, _ = results
 
     errors = []
     # Check retained sequences

@@ -47,6 +47,7 @@ def preprocess_msa(
         (NDArray[bool]) boolean MSA matrix after processing.
         (list[str]) retained sequence IDs.
         (NDArray[float]) sequence weights.
+        (NDArray[float]) gap frequency fi0.
         (NDArray[int]) retained sequences.
         (NDArray[int]) retained positions.
         (dict): reference similarity results. If a reference ID is specified,
@@ -164,4 +165,4 @@ def preprocess_msa(
     if verbosity:
         print(f"Effective sample size (sum of weights): {ws.sum()}")
 
-    return msa, xmsa, seqids, ws, retained_sequences, retained_positions, ref_results
+    return msa, xmsa, seqids, ws, fi0, retained_sequences, retained_positions, ref_results

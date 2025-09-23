@@ -68,7 +68,11 @@ def run_sca(
 
     Dia = np.nan * np.ones([npos, naas])
     Dia[:] = fia * np.log(fia / qa) + (1 - fia) * np.log((1 - fia) / (1 - qa))
-    Di = np.sum(fia * np.log(fia / qa), axis=1)
+    q0hat = np.sum(~np.any(xmsa, axis=-1)) / (nseq * npos)
+    qahat = (1 - q0hat) * qa
+    Di = np.sum(fia * np.log(fia / qahat), axis=1)
+    if q0hat > 0:
+        Di += fi0 * np.log(fi0 / q0hat)
 
     Cijab_raw = fijab - fia[:,None,:,None] * fia[None,:,None,:]
     Cij_raw = np.sqrt(np.sum(np.square(Cijab_raw), axis=(-1, -2)))
@@ -93,3 +97,31 @@ def run_sca(
         for k in return_keys:
             results[k] = eval(k)
     return results
+
+
+def get_top_k_conserved_retained_positions(
+        retained_positions: NDArray[np.int_], 
+        Di: NDArray[np.float64], 
+        k: int,
+) -> tuple[NDArray[np.int_], NDArray[np.float64]]:
+    """Positional indices and Di values among the top-k most conserved.
+
+    Args:
+        retained_positions (NDArray): _description_
+        Di (NDArray): _description_
+        k (_type_): _description_
+
+    Returns:
+        NDArray[int]: Top conserved positions in the MSA with frequencies Di.
+        NDArray[float]: Top conserved values.
+    """
+    top_conserved_idxs = np.flip(np.argsort(Di))[:k]
+    top_conserved_positions = retained_positions[top_conserved_idxs]
+    top_conserved_values = Di[top_conserved_idxs]
+    return top_conserved_positions, top_conserved_values
+
+
+def link_seq_to_structure(
+        
+):
+    return
