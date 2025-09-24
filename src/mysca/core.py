@@ -22,7 +22,7 @@ def run_sca(
 ):
     """Run SCA algorithm on given MSA matrix
 
-    Args:
+    Args: # TODO
         xmsa (_type_): _description_
         ws (_type_): _description_
         background_map (_type_): _description_
@@ -33,7 +33,7 @@ def run_sca(
         pbar (bool, optional): _description_. Defaults to True.
         leave_pbar (bool, optional): _description_. Defaults to True.
 
-    Returns:
+    Returns:  # TODO
         _type_: _description_
     """
     lam = regularization  # brevity
@@ -72,14 +72,15 @@ def run_sca(
     qahat = (1 - q0hat) * qa
     Di = np.sum(fia * np.log(fia / qahat), axis=1)
     if q0hat > 0:
-        Di += fi0 * np.log(fi0 / q0hat)
+        with np.errstate(divide='ignore'):
+            Di += fi0 * np.where(fi0 > 0, np.log(fi0 / q0hat), 0)
 
     Cijab_raw = fijab - fia[:,None,:,None] * fia[None,:,None,:]
     Cij_raw = np.sqrt(np.sum(np.square(Cijab_raw), axis=(-1, -2)))
     # Cij_raw = (Cij_raw + Cij_raw.T) / 2
     phi_ia = np.log((fia * (1 - qa)) / ((1 - fia) * qa))
     Cijab_corr = phi_ia[:,None,:,None] * phi_ia[None,:,None,:] * Cijab_raw
-    Cij = np.sqrt(np.sum(np.square(Cijab_corr), axis=(-1,-2)))
+    Cij_corr = np.sqrt(np.sum(np.square(Cijab_corr), axis=(-1,-2)))
     # Cij = (Cij + Cij.T) / 2
 
     if return_keys == "all":
@@ -92,36 +93,53 @@ def run_sca(
         results["Cij_raw"] = Cij_raw
         results["phi_ia"] = phi_ia
         results["Cijab_corr"] = Cijab_corr
-        results["Cij_corr"] = Cij
+        results["Cij_corr"] = Cij_corr
     else:
         for k in return_keys:
             results[k] = eval(k)
     return results
 
 
-def get_top_k_conserved_retained_positions(
-        retained_positions: NDArray[np.int_], 
-        Di: NDArray[np.float64], 
-        k: int,
-) -> tuple[NDArray[np.int_], NDArray[np.float64]]:
-    """Positional indices and Di values among the top-k most conserved.
+def run_ica(
+        v: NDArray, 
+        rho: float = 1e-4, 
+        tol: float = 1e-7, 
+        maxiter: int = 1000000,
+        verbosity: int = 1,
+):
+    """Implements ICA using the infomax algorithm.
 
+    Independent components V^* are computed by applying the returned matrix
+    W to the eigenvectors in input V: V* = WV, with V of shape (m, k)
+
+    Refs: 
+        [1] Bell and Sejnowski, 1995
+        [2] SI to Rivoire et al., 2016
+    
     Args:
-        retained_positions (NDArray): _description_
-        Di (NDArray): _description_
-        k (_type_): _description_
+        (NDArray) v: 2d eigenvector array. Shape (k, m), where k is the number 
+            of eigenvectors.
+        (float) rho: ICA stepsize parameter. Default 1e-4.
+        (float) tol: Convergence threshold. Default 1e-7
+        (int) maxiter: Maximum steps before halting. Default 1000000.
+        (int) verbosity: Verbosity level. Default 1.
 
     Returns:
-        NDArray[int]: Top conserved positions in the MSA with frequencies Di.
-        NDArray[float]: Top conserved values.
+        (NDArray) Independent Component vectors W. Shape (k, k).
     """
-    top_conserved_idxs = np.flip(np.argsort(Di))[:k]
-    top_conserved_positions = retained_positions[top_conserved_idxs]
-    top_conserved_values = Di[top_conserved_idxs]
-    return top_conserved_positions, top_conserved_values
-
-
-def link_seq_to_structure(
-        
-):
-    return
+    k, m = v.shape
+    id = np.eye(k)
+    w = np.eye(k)
+    dw = 100.
+    itercount = 0
+    while itercount < maxiter:
+        y = w @ v
+        g = 1 / (1 + np.exp(-y))
+        dw = rho * (id + (1 - 2 * g) @ y.T) @ w
+        w += dw
+        if np.max(np.abs(dw)) < tol:
+            if verbosity:
+                print(f"Converged in {itercount} iterations")
+            return w
+        itercount += 1
+    print(f"Did not converge in {maxiter} iterations")

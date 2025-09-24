@@ -4,10 +4,11 @@
 
 import numpy as np
 from numpy.typing import NDArray
-import pandas as pd
 from Bio import AlignIO
 from Bio.PDB import PDBParser
 from Bio.PDB.Structure import Structure
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from Bio.AlignIO import MultipleSeqAlignment
 
 from mysca.mappings import SymMap, DEFAULT_MAP
@@ -68,7 +69,11 @@ def load_msa(
     return msa_obj, msa_matrix, msa_ids
 
 
-def load_pdb_structure(fpath: str, id: str) -> Structure:
+def load_pdb_structure(
+        fpath: str, 
+        id: str,
+        quiet: bool = True
+) -> Structure:
     """Load a PDB structure from a pdb file.
     
     Args:
@@ -78,7 +83,48 @@ def load_pdb_structure(fpath: str, id: str) -> Structure:
     Returns:
         (Structure) Protein structure.
     """
-    parser = PDBParser()
+    parser = PDBParser(QUIET=quiet)
     structure = parser.get_structure(id, fpath)
     return structure
 
+
+def get_residue_sequence_from_pdb_structure(
+        struct: Structure, 
+) -> list[str]:
+    """Return list of residues from a PDB protein structure.
+
+    Assumes a single chain.
+
+    Args:
+        struct (Structure): Protein structure object
+
+    Returns:
+        list[str]: List of residues.
+    """
+    # Assuming single chain
+    chain = next(struct.get_chains())
+    # Map sequence indices to PDB residue numbers
+    residues = [r for r in chain.get_residues() if r.id[0] == " "]
+    return residues
+
+
+def msa_from_aligned_seqs(
+        seqs_aligned: list[str],
+        ids: list[str] = None,
+) -> MultipleSeqAlignment:
+    """Get an MSA from a list of aligned sequences.
+
+    Args:
+        seqs_aligned (list[str]): Aligned sequences, all of the same length.
+        ids (list[str], optional): List of IDs. Defaults to None.
+
+    Returns:
+        MultipleSeqAlignment: MSA object.
+    """
+    if ids is None:
+        ids = [f"sequence{i}" for i in range(len(seqs_aligned))]
+    records = [
+        SeqRecord(Seq(s), id=ids[i]) for i, s in enumerate(seqs_aligned)
+    ]
+    msa_obj = MultipleSeqAlignment(records)
+    return msa_obj

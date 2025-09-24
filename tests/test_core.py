@@ -12,6 +12,7 @@ from mysca.io import load_msa
 from mysca.mappings import SymMap
 from mysca.preprocess import preprocess_msa
 from mysca.core import run_sca
+# from mysca.helpers import map_msa_positions_to_sequence
 
 
 #####################
@@ -226,14 +227,14 @@ def test_run_sca(
     errors = []
     for key in expected_results:
         print(key)
-        # if np.shape(expected_results[key]) != np.shape(sca_res[key]):
-        #     msg = f"Shape mismatch in {key}\n"
-        #     msg += f"Expected: {np.shape(expected_results[key])}\n"
-        #     msg += f"Got: {np.shape(sca_res[key])}."
-        #     errors.append(msg)
+        if np.shape(expected_results[key]) != np.shape(sca_res[key]):
+            msg = f"Shape mismatch in {key}\n"
+            msg += f"Expected: {np.shape(expected_results[key])}\n"
+            msg += f"Got: {np.shape(sca_res[key])}."
+            errors.append(msg)
         if not np.allclose(expected_results[key], sca_res[key]):
             msg = f"Mismatch in {key}\n"
-            # msg += f"Expected:\n{expected_results[key]}\n"
-            # msg += f"     Got:\n{sca_res[key]}\n"
+            msg += f"Expected:\n{expected_results[key]}\n"
+            msg += f"     Got:\n{sca_res[key]}\n"
             errors.append(msg)
     assert not errors, "Errors occurred:\n{}".format("\n".join(errors))
