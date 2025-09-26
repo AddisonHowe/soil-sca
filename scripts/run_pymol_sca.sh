@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 
 datdir=data/K00370
-outdir=out_input/sca_by_ko/K00370
+outdir=out/K00370/MSA_800
+reference="1Q16"
 
-# scaffold=$1
-# scaffold=Soil14.scaffold_576820813_c1_40
 
-for f in ${datdir}/structures/Soil*.pdb; do
+for f in ${datdir}/structures/*.pdb; do
     s=$(basename $f)
     s=${s/.pdb/}
     echo $s
     python scripts/pymol_sca.py \
-        -s $s \
+        -s ${s} \
+        -r ${reference} \
         --pdb_dir ${datdir}/structures \
         --groups_dir ${outdir}/sca_groups \
-        --outdir ${outdir}/images \
-        --groups 0 1 2 3
-
+        --outdir ${outdir}/pymol_images \
+        --groups 0 1
 done
-

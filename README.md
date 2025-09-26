@@ -25,18 +25,10 @@ Verify things have installed successfully by running:
 pytest tests
 ```
 
-
-## Description of data
-
-### K00370
-
-#### Raw sequences (`seqs`)
-
-| filename | description |
-| ------- | ------- |
-| `kegg_seqs_unclust.faa` | All sequences in the KEGG database associated to the KO K00370. Originally located in `soil-ko-wrangling` repository. |
-| `soil_seqs_1000.fasta` | Copied from `soil-metagenomics/out/aaseqs/K00370/1000_seqs.fasta` |
-| `soil_seqs_800.fasta` |  Copied from `soil-metagenomics/out/aaseqs/K00370/800_seqs.fasta` |
-
+## Directories
 
 ## References
+
+[1] N. Halabi, O. Rivoire, S. Leibler, and R. Ranganathan, Protein Sectors: Evolutionary Units of Three-Dimensional Structure, Cell 138, 774 (2009).
+
+[2] O. Rivoire, K. A. Reynolds, and R. Ranganathan, Evolution-Based Functional Decomposition of Proteins, PLoS Comput Biol 12, e1004817 (2016).

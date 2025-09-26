@@ -21,6 +21,7 @@ def parse_args(args):
     parser.add_argument("--pdb_dir", type=str, required=True)
     parser.add_argument("--groups_dir", type=str, required=True)
     parser.add_argument("--groups", type=int, nargs='*')
+    parser.add_argument("-r", "--reference", type=str, default=None)
     parser.add_argument("-o", "--outdir", type=str, default=None)
 
 
@@ -32,9 +33,11 @@ def main(args):
     pdb_dir = args.pdb_dir
     groups_basedir = args.groups_dir
     group_idxs = args.groups
+    ref_scaffold = args.reference
     outdir = args.outdir
 
-    ref_scaffold = "1Q16"
+    if ref_scaffold is None or ref_scaffold.lower() == "none":
+        ref_scaffold = None
 
     gdir = f"{groups_basedir}"
 
@@ -45,15 +48,17 @@ def main(args):
     pdbfile = f"{pdb_dir}/{scaffold}.pdb"
     cmd.load(pdbfile, "struct")
 
-    reffile = f"{pdb_dir}/{ref_scaffold}.pdb"
-    cmd.load(reffile, "ref_struct")
+    if ref_scaffold:
+        reffile = f"{pdb_dir}/{ref_scaffold}.pdb"
+        cmd.load(reffile, "ref_struct")
     
     struct_color = "gray70"
     struct_style = "sticks"
     group_color = "red"
     group_style = "spheres"
 
-    cmd.hide("everything", "ref_struct")
+    if ref_scaffold:
+        cmd.hide("everything", "ref_struct")
 
     cmd.hide("everything", "struct")
     cmd.show(struct_style, "struct")
@@ -75,7 +80,8 @@ def main(args):
             group = None
             print(f"Group {gidx} file not found: {group_fpath}")
 
-        cmd.align("struct", "ref_struct")
+        if ref_scaffold:
+            cmd.align("struct", "ref_struct")
         
         cmd.png(f"{outdir}/{scaffold}_group{gidx}.png", dpi=300)
 

@@ -17,9 +17,9 @@ from mysca.mappings import SymMap, DEFAULT_MAP
 def load_msa(
         fpath, 
         format: str = "fasta", 
-        mapping: SymMap = DEFAULT_MAP,
+        mapping: SymMap = None,
         verbosity: int = 2,
-) -> tuple[MultipleSeqAlignment, NDArray[np.int_], list]:
+) -> tuple[MultipleSeqAlignment, NDArray[np.int_], list, SymMap]:
     """Load an MSA fasta file and return the MSA object, matrix, and IDs.
     
     Filters out any sequences that contain excluded characters in the given 
@@ -28,8 +28,8 @@ def load_msa(
     Args:
         fpath (str): Path to input MSA file.
         format (str): Format of the input file. Default "fasta".
-        mapping (SeqMap): SeqMap object defining the mapping from AAs to ints.
-            Default is the default SeqMap defined in mappings.py.
+        mapping (SeqMap): SeqMap object defining the mapping from AAs to ints,
+            or None. If None, determine the mapping from the given MSA.
         verbosity (int): verbosity level. Default 1.
     
     Returns:
@@ -38,8 +38,19 @@ def load_msa(
             given mapping.
         list[str]: Sequence IDs as defined in the input fasta file, that are 
             retained in the MSA.
+        SymMap: Mapping from amino acids to index used to compute MSA matrix. 
     """
     msa_obj = AlignIO.read(fpath, format)
+
+    GAPSYM = "-"
+    if mapping is None:
+        seq_join = ""
+        for entry in msa_obj:
+            seq = str(entry.seq)
+            seq_join += seq
+        aa_syms = np.sort(np.unique([c for c in seq_join if c != GAPSYM]))
+        aa_syms = "".join(aa_syms)
+        mapping = SymMap(aa_syms, gapsym=GAPSYM, exclude_syms="")
 
     # Keep records in the MSA not containing excluded symbols.
     exc_recs_screen = np.array([
@@ -66,7 +77,7 @@ def load_msa(
 
     # Retrieve MSA sequence IDs.
     msa_ids = [record.id for record in msa_obj]
-    return msa_obj, msa_matrix, msa_ids
+    return msa_obj, msa_matrix, msa_ids, mapping
 
 
 def load_pdb_structure(

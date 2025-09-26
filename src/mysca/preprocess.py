@@ -4,6 +4,7 @@
 
 import numpy as np
 from numpy.typing import NDArray
+from collections import Counter
 
 from mysca.mappings import SymMap, DEFAULT_MAP
 
@@ -96,7 +97,7 @@ def preprocess_msa(
     xmsa = xmsa[:,screen,:]
     retained_positions = retained_positions[screen]
     if verbosity:
-        print(f"Filtered {np.sum(~screen)} positions at threshold {gap_truncation_thresh}.")
+        print(f"Filtered {np.sum(~screen)} positions at threshold τ={gap_truncation_thresh}.")
         print(f"  MSA shape: {msa.shape} (sequences x positions)")
     assert len(retained_positions) == msa.shape[1], "Mismatch"
 
@@ -108,7 +109,7 @@ def preprocess_msa(
     retained_sequences = retained_sequences[screen]
     seqids = np.array([seqids_orig[i] for i in retained_sequences])
     if verbosity:
-        print(f"Filtered {np.sum(~screen)} sequences at threshold {sequence_gap_thresh}.")
+        print(f"Filtered {np.sum(~screen)} sequences at threshold γ_seq={sequence_gap_thresh}.")
         print(f"  MSA shape: {msa.shape} (sequences x positions)")
     assert len(retained_sequences) == msa.shape[0], "Mismatch"
 
@@ -131,7 +132,7 @@ def preprocess_msa(
         retained_sequences = retained_sequences[screen]
         seqids = np.array([seqids_orig[i] for i in retained_sequences])
         if verbosity:
-            print(f"Filtered {np.sum(~screen)} sequences at threshold {reference_similarity_thresh}.")
+            print(f"Filtered {np.sum(~screen)} sequences at threshold Δ={reference_similarity_thresh}.")
             print(f"  MSA shape: {msa.shape} (sequences x positions)")
         assert len(retained_sequences) == msa.shape[0], "Mismatch"
     else:
@@ -151,7 +152,7 @@ def preprocess_msa(
     xmsa = xmsa[:,screen,:]
     retained_positions = retained_positions[screen]
     if verbosity:
-        print(f"Filtered {np.sum(~screen)} positions at threshold {position_gap_thresh}.")
+        print(f"Filtered {np.sum(~screen)} positions at threshold γ_pos={position_gap_thresh}.")
         print(f"  MSA shape: {msa.shape} (sequences x positions)")
     assert len(retained_positions) == msa.shape[1], "Mismatch"
 
@@ -166,3 +167,21 @@ def preprocess_msa(
         print(f"Effective sample size (sum of weights): {ws.sum()}")
 
     return msa, xmsa, seqids, ws, fi0, retained_sequences, retained_positions, ref_results
+
+
+def compute_background_freqs(msa_obj, gapstr="-"):
+    background_freqs = {}
+    for entry in msa_obj:
+        seq = str(entry.seq)
+        counts = Counter(seq)
+        for k, v in counts.items():
+            if k not in background_freqs:
+                background_freqs[k] = v
+            else:
+                background_freqs[k] += v
+    if gapstr in background_freqs:
+        background_freqs.pop(gapstr)
+    total = np.sum(background_freqs[k] for k in background_freqs.keys())
+    for k in background_freqs:
+        background_freqs[k] /= total
+    return background_freqs

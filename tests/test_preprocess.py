@@ -210,7 +210,7 @@ def test_preprocessing(
     seqids_exp,
 ):
     
-    msa_obj, msa_orig, msa_ids_orig = load_msa(
+    msa_obj, msa_orig, msa_ids_orig, _ = load_msa(
         fa_fpath, format="fasta", mapping=symmap,
     )
     msa_obj_length = len(msa_obj)

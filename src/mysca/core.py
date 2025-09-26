@@ -19,6 +19,7 @@ def run_sca(
         return_keys: str = "all",
         pbar: bool = True,
         leave_pbar: bool = True,
+        verbosity: int = 1,
 ):
     """Run SCA algorithm on given MSA matrix
 
@@ -32,6 +33,7 @@ def run_sca(
         return_keys (str, optional): _description_. Defaults to "all".
         pbar (bool, optional): _description_. Defaults to True.
         leave_pbar (bool, optional): _description_. Defaults to True.
+        verbosity (int, optional): _description_. Defaults to 1.
 
     Returns:  # TODO
         _type_: _description_
@@ -48,6 +50,9 @@ def run_sca(
     # Compute positional conservation
     ws_norm = ws / ws.sum()
     fi0 = 1 - np.sum(ws[:,None,None] * xmsa, axis=(0,2)) / ws.sum()
+    if np.any(np.isclose(fi0, 0)):
+        # TODO: handle this
+        print("0 value encountered in SCA calculation of fi0!")
     fia = (1 - lam) * np.sum(ws_norm[:,None,None] * xmsa, axis=0) + lam / nsyms
 
     # Compute correlated conservation
@@ -103,10 +108,10 @@ def run_sca(
 def run_ica(
         v: NDArray, 
         rho: float = 1e-4, 
-        tol: float = 1e-7, 
+        tol: float = 1e-6, 
         maxiter: int = 1000000,
         verbosity: int = 1,
-):
+) -> tuple[NDArray[np.float64], float]:
     """Implements ICA using the infomax algorithm.
 
     Independent components V^* are computed by applying the returned matrix
@@ -126,11 +131,11 @@ def run_ica(
 
     Returns:
         (NDArray) Independent Component vectors W. Shape (k, k).
+        (float) Achieved delta W value.
     """
     k, m = v.shape
     id = np.eye(k)
     w = np.eye(k)
-    dw = 100.
     itercount = 0
     while itercount < maxiter:
         y = w @ v
@@ -140,6 +145,7 @@ def run_ica(
         if np.max(np.abs(dw)) < tol:
             if verbosity:
                 print(f"Converged in {itercount} iterations")
-            return w
+            return w, np.max(np.abs(dw))
         itercount += 1
     print(f"Did not converge in {maxiter} iterations")
+    return None, np.max(np.abs(dw))

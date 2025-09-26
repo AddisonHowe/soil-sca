@@ -1,6 +1,7 @@
 # Project specific items
 _deprecated/
 **/.DS_Store
+data/*/structures/*.pdb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
