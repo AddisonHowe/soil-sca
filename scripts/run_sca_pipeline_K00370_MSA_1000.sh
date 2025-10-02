@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-###~~~~~~~~~~ K00370 TIGR01580subset1000_with_soil_seqs_1000
-msafpath="data/K00370/msas/MSA_TIGR01580subset1000_with_soil_seqs_1000.aln-fasta"
+###~~~~~~~~~~ K00370 MSA_1000
+msafpath="data/K00370/msas/MSA_1000.aln-fasta"
 structdir="data/K00370/structures"
-outdir="out/K00370/TIGR01580subset1000_with_soil_seqs_1000"
+outdir="out/K00370/MSA_1000"
 gap_truncation_thresh=0.4
 sequence_gap_thresh=0.2
 reference=None
@@ -13,7 +13,7 @@ position_gap_thresh=0.2
 regularization=0.03
 background=None
 n_top_conserved=10
-n_boot=10
+n_boot=20
 kstar=0
 
 RUN_PYMOL=true

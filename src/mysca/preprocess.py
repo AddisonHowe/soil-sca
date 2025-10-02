@@ -166,7 +166,7 @@ def preprocess_msa(
     if verbosity:
         print(f"Effective sample size (sum of weights): {ws.sum()}")
 
-    return msa, xmsa, seqids, ws, fi0, retained_sequences, retained_positions, ref_results
+    return msa, xmsa.astype(int), seqids, ws, fi0, retained_sequences, retained_positions, ref_results
 
 
 def compute_background_freqs(msa_obj, gapstr="-"):

@@ -3,7 +3,7 @@
 ## Raw sequences
 
 * `K00370_rep.faa`: Representative sequences of KO entry K00370, from the KEGG database. Copied from the `soil-ko-wrangling` pipeline.
-* `TIGR01580.fasta`: Complete set of 9557 sequences acquired from [interpro]() that are part of the TIGR01580 accession. # TODO: link?
+* `TIGR01580.fasta`: Complete set of 9557 sequences acquired from [interpro](https://www.ebi.ac.uk/interpro/entry/ncbifam/TIGR01580/protein/UniProt/#table) that are part of the TIGR01580 accession.
 * `soil_seqs_800.fasta`: Soil ORFs that contain a start and stop codon, and are at least 800 amino acids in length. Copied from the `soil-metagenomics` repository.
 * `soil_seqs_1000.fasta`: Soil ORFs that contain a start and stop codon, and are at least 1000 amino acids in length. Copied from the `soil-metagenomics` repository.
 * `soil_seqs_800_with_reference.fasta`: As above, but also containing reference sequence 1Q16 acquired online.  # TODO: where?

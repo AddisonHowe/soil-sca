@@ -52,7 +52,8 @@ def run_sca(
     fi0 = 1 - np.sum(ws[:,None,None] * xmsa, axis=(0,2)) / ws.sum()
     if np.any(np.isclose(fi0, 0)):
         # TODO: handle this
-        print("0 value encountered in SCA calculation of fi0!")
+        if verbosity > 1:
+            print("0 value encountered in SCA calculation of fi0!")
     fia = (1 - lam) * np.sum(ws_norm[:,None,None] * xmsa, axis=0) + lam / nsyms
 
     # Compute correlated conservation
@@ -107,7 +108,7 @@ def run_sca(
 
 def run_ica(
         v: NDArray, 
-        rho: float = 1e-4, 
+        rho: float = 1e-1, 
         tol: float = 1e-6, 
         maxiter: int = 1000000,
         verbosity: int = 1,

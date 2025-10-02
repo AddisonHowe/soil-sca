@@ -27,6 +27,16 @@ pytest tests
 
 ## Directories
 
+## Links
+
+* [ClustalOmega](https://www.ebi.ac.uk/jdispatcher/msa/clustalo?stype=protein&outfmt=fa)
+* [pySCA and tutorial](https://ranganathanlab.gitlab.io/pySCA/)
+* [pySCA repo](https://github.com/ranganathanlab/pySCA)
+* [pySCA data](https://github.com/ranganathanlab/pySCA-data)
+* [pySCA S1A notebook](https://github.com/ranganathanlab/pySCA/blob/master/notebooks/SCA_S1A.ipynb)
+* [About Protein Family Models](https://www.ncbi.nlm.nih.gov/genome/annotation_prok/evidence/)
+* [nirB PFM](https://www.ncbi.nlm.nih.gov/genome/annotation_prok/evidence/TIGR02374/)
+
 ## References
 
 [1] N. Halabi, O. Rivoire, S. Leibler, and R. Ranganathan, Protein Sectors: Evolutionary Units of Three-Dimensional Structure, Cell 138, 774 (2009).

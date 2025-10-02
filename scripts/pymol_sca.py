@@ -23,10 +23,54 @@ def parse_args(args):
     parser.add_argument("--groups", type=int, nargs='*')
     parser.add_argument("-r", "--reference", type=str, default=None)
     parser.add_argument("-o", "--outdir", type=str, default=None)
-
-
     return parser.parse_args(args)
 
+
+def plot_scaffold_with_all_groups(
+        scaffold, groups_basedir, group_idxs, ref_scaffold, outdir, 
+):
+    gdir = f"{groups_basedir}"
+
+    if outdir:
+        os.makedirs(outdir, exist_ok=True)
+    
+    struct_color = "gray70"
+    struct_style = "sticks"
+    group_colors = ["red", "orange", "yellow", "green", "blue", "purple"]
+    group_styles = ["spheres"] * len(group_idxs)
+
+    if ref_scaffold:
+        cmd.hide("everything", "ref_struct")
+
+    cmd.hide("everything", "struct")
+    cmd.show(struct_style, "struct")
+    cmd.color(struct_color, "struct")
+    cmd.bg_color("white")
+
+    if ref_scaffold:
+        cmd.align("struct", "ref_struct")
+
+    topk = 5
+    for i, gidx in enumerate(group_idxs[0:min(topk, len(group_idxs))]):
+        group_fpath = f"{gdir}/group_{gidx}/group_{gidx}_{scaffold}.npy"
+        if os.path.isfile(group_fpath):
+            group_selection = f"group_selection{i}"
+            group = np.load(group_fpath)
+            res_idxs = 1 + group
+            selection_string = "resi " + "+".join(map(str, res_idxs))
+            cmd.select(group_selection, selection_string)
+            cmd.show(group_styles[i], group_selection)
+            cmd.color(group_colors[i], group_selection)
+        else:
+            group_selection = None
+            group = None
+            print(f"Group {gidx} file not found: {group_fpath}")
+
+    for ri in range(4):
+        cmd.rotate("y", 90 * ri, "struct")
+        cmd.png(f"{outdir}/{scaffold}_all_groups_view{ri}.png", dpi=300)
+
+    return
 
 def main(args):
     scaffold = args.scaffold
@@ -94,6 +138,12 @@ def main(args):
             cmd.hide(group_style, group_selection)
             cmd.color(struct_color, group_selection)  # reset color
             cmd.delete(group_selection)
+    
+    subdir = os.path.join(outdir, "groups_comb")
+    os.makedirs(subdir, exist_ok=True)
+    plot_scaffold_with_all_groups(
+        scaffold, groups_basedir, group_idxs, ref_scaffold, subdir, 
+    )
 
 
 if __name__ == "__main__":

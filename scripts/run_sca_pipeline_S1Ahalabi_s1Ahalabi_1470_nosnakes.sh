@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
 
-###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ K00370 MSA_800
-msafpath="data/K00370/msas/MSA_800.aln-fasta"
-structdir="data/K00370/structures"
-outdir="out/K00370/MSA_800"
-gap_truncation_thresh=0.5
-sequence_gap_thresh=0.5
-reference=None
+###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ S1Ahalabi s1Ahalabi_1470_nosnakes
+msafpath="data/S1Ahalabi/msas/s1Ahalabi_1470_nosnakes.aln-fasta"
+structdir="data/S1Ahalabi/structures"
+outdir="out/S1Ahalabi/s1Ahalabi_1470_nosnakes"
+gap_truncation_thresh=0.4
+sequence_gap_thresh=0.2
+reference="gi|4139558|pdb|3TGI|E__vertebrate|warm|Rattus"
 reference_similarity_thresh=0.2
 sequence_similarity_thresh=0.8
-position_gap_thresh=0.25
+position_gap_thresh=0.2
 regularization=0.03
 background=None
-n_top_conserved=10
-n_boot=10
+n_top_conserved=5
+n_boot=0  # Note: set to 0
 kstar=0
 
-RUN_PYMOL=false
-pymol_reference="1Q16"
+RUN_PYMOL=true
+pymol_reference="3TGI"
 
 
 # Run SCA script
-mysca -msa $msafpath -s $structdir -o $outdir \
+runsca -msa $msafpath -o $outdir \
     --gap_truncation_thresh $gap_truncation_thresh \
     --sequence_gap_thresh $sequence_gap_thresh \
-    --reference $reference \
+    --reference "$reference" \
     --reference_similarity_thresh $reference_similarity_thresh \
     --sequence_similarity_thresh $sequence_similarity_thresh \
     --position_gap_thresh $position_gap_thresh \
@@ -33,11 +33,11 @@ mysca -msa $msafpath -s $structdir -o $outdir \
     --n_top_conserved $n_top_conserved \
     --n_boot $n_boot \
     --kstar $kstar \
-    --pbar
+    --pbar -v 10
 
 
 # Run pymol script
-if [[ ${RUN_PYMOL} -eq "true" ]]; then
+if [[ ${RUN_PYMOL} == "true" ]]; then
     echo "Running pymol postscript..."
     for f in ${structdir}/*.pdb; do
         s=$(basename $f)
@@ -49,6 +49,6 @@ if [[ ${RUN_PYMOL} -eq "true" ]]; then
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
             --outdir ${outdir}/pymol_images \
-            --groups 1 2 3
+            --groups 1 2 3 4 5 6
     done
 fi

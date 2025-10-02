@@ -26,6 +26,7 @@ dependencies = [
 
 [project.scripts]
 mysca = "mysca.__main__:main"
+runsca = "mysca.__main__:run_sca"
 
 [project.optional-dependencies]
 dev = [
