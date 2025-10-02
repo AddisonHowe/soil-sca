@@ -25,6 +25,18 @@ Verify things have installed successfully by running:
 pytest tests
 ```
 
+We use a separate environment with an installation of [ClustalOmega](http://www.clustal.org/omega) in order to create Multiple Sequence Alginments (MSAs). Specifically, we download the [precompiled binary](http://www.clustal.org/omega/#Download), and link this to an empty conda environment as so:
+
+```bash
+# Download the binary to a specific directory
+cd <software-directory>
+wget http://www.clustal.org/omega/clustalo-1.2.4-Ubuntu-x86_64
+# Initialize an empty conda environment
+conda create -n clustalo-env
+conda activate clustalo-env
+ln -s <software-directory>/clustalo-1.2.4-Ubuntu-x86_64 $CONDA_PREFIX/bin/clustalo
+```
+
 ## Directories
 
 ## Links

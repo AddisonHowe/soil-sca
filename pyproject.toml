@@ -32,3 +32,6 @@ runsca = "mysca.__main__:run_sca"
 dev = [
   "pytest",
 ]
+pymol = [
+  "pymol-open-source",
+]
