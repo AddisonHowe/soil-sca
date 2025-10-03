@@ -49,6 +49,6 @@ if [[ ${RUN_PYMOL} == "true" ]]; then
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
             --outdir ${outdir}/pymol_images \
-            --groups 1 2 3 4 5
+            --groups "-1"
     done
 fi

@@ -20,8 +20,13 @@ def parse_args(args):
     parser.add_argument("-s", "--scaffold", type=str, required=True)
     parser.add_argument("--pdb_dir", type=str, required=True)
     parser.add_argument("--groups_dir", type=str, required=True)
-    parser.add_argument("--groups", type=int, nargs='*')
-    parser.add_argument("-r", "--reference", type=str, default=None)
+    parser.add_argument("--groups", type=int, nargs='*',
+                        help="Group indices, (starting at 1) that correspond " \
+                        "to subdirectories group_<idx> of groups_dir. If -1, " \
+                        "produce plots for all groups.")
+    parser.add_argument("-r", "--reference", type=str, default=None,
+                        help="If specified, align the input scaffold to this " \
+                        "reference.")
     parser.add_argument("-o", "--outdir", type=str, default=None)
     return parser.parse_args(args)
 
@@ -84,6 +89,15 @@ def main(args):
         ref_scaffold = None
 
     gdir = f"{groups_basedir}"
+    
+    if len(group_idxs) == 1 and group_idxs[0] == -1:
+        # Check group directory and include all groups present
+        group_files = os.listdir(gdir)
+        prefix = "group_"
+        group_idxs = [
+            f.removeprefix(prefix) for f in group_files if f.startswith(prefix)
+        ]
+        group_idxs = [int(x) for x in group_idxs]
 
     if outdir:
         os.makedirs(outdir, exist_ok=True)
