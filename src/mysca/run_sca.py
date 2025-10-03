@@ -15,8 +15,9 @@ from mpl_toolkits.mplot3d import Axes3D
 import tqdm as tqdm
 import json
 
-import scipy.cluster.hierarchy as sch
+import scipy
 from scipy import sparse
+import scipy.cluster.hierarchy as sch
 from scipy.spatial.distance import pdist
 
 from mysca.io import load_msa
@@ -46,7 +47,11 @@ def parse_args(args):
     parser.add_argument("--pbar", action="store_true")
     parser.add_argument("-v", "--verbosity", type=int, default=1)
     parser.add_argument("--seed", type=int, default=None)
-
+    parser.add_argument("--nodendro", action="store_true", 
+                        help="Skip dendrogram plots")
+    parser.add_argument("--load_data", type=str, default="", 
+                        help="SCA directory to load precomputed data from")
+    
     sca_params = parser.add_argument_group("SCA parameters")
     sca_params.add_argument("--gap_truncation_thresh", type=float, default=0.4,
                             help="SCA parameter gap_truncation_thresh")
@@ -72,7 +77,7 @@ def parse_args(args):
     sca_params.add_argument("-k", "--kstar", type=int, default=0, 
                             help="Value of k_start to override bootstrap estimate.")
     sca_params.add_argument("-p", "--pstar", type=int, default=95, 
-                            help="Percentile defining IC groups.")
+                            help="Percentile defining IC groups.")    
 
     return parser.parse_args(args)
 
@@ -88,6 +93,8 @@ def main(args):
     N_BOOT = args.n_boot
     PBAR = args.pbar
     SEED = args.seed
+    DENDRO = not args.nodendro
+    LOAD_DATA = args.load_data
 
     gap_truncation_thresh = args.gap_truncation_thresh
     sequence_gap_thresh = args.sequence_gap_thresh
@@ -202,37 +209,37 @@ def main(args):
     background_freq_array = background_freq_array / background_freq_array.sum()
 
     # Plot sequence similarity
-    plot_sequence_similarity(
-        xmsa, IMGDIR,
-    )
+    if DENDRO:
+        plot_sequence_similarity(
+            xmsa, IMGDIR,
+        )
     
     # Run SCA
-    sca_results = run_sca(
-        xmsa, weights,
-        background_map=background_freq,
-        mapping=sym_map,
-        background_arr=background_freq_array,
-        regularization=regularization,
-        return_keys=["Di", "Cij_raw", "Cij_corr"],
-        pbar=PBAR,
-        leave_pbar=True,
-    )
+    if not LOAD_DATA:
+        sca_results = run_sca(
+            xmsa, weights,
+            background_map=background_freq,
+            mapping=sym_map,
+            background_arr=background_freq_array,
+            regularization=regularization,
+            return_keys=["Di", "Cij_raw", "Cij_corr"],
+            pbar=PBAR,
+            leave_pbar=True,
+        )
+        Di = sca_results["Di"]
+        Cij_raw = sca_results["Cij_raw"]
+        Cij = sca_results["Cij_corr"]
+        del sca_results  # relieve memory
 
-    # fi0 = sca_results["fi0"]
-    # fia = sca_results["fia"]
-    # fijab = sca_results["fijab"]
-    # Dia = sca_results["Dia"]
-    Di = sca_results["Di"]
-    # Cijab_raw = sca_results["Cijab_raw"]
-    Cij_raw = sca_results["Cij_raw"]
-    # phi_ia = sca_results["phi_ia"]
-    # Cijab_corr = sca_results["Cijab_corr"]
-    Cij = sca_results["Cij_corr"]
-    del sca_results  # relieve memory
+        # Save SCA results
+        np.save(f"{SCADIR}/conservation.npy", Di)
+        np.save(f"{SCADIR}/sca_matrix.npy", Cij)
+    else:
+        Di = np.load(f"{LOAD_DATA}/conservation.npy")
+        Cij_raw = None
+        Cij = np.load(f"{LOAD_DATA}/sca_matrix.npy")
 
-    # Save SCA results
-    np.save(f"{SCADIR}/conservation.npy", Di)
-    np.save(f"{SCADIR}/sca_matrix.npy", Cij)
+    
     
     # Determine the top conserved positions
     topk_conserved_msa_pos, top_conserved_Di = get_top_k_conserved_retained_positions(
@@ -276,19 +283,20 @@ def main(args):
             f"{evals_sca.min():.3g}, {evals_sca.max():.3f}")
     
     # Plot Covariance Matrix
-    fig, ax = plt.subplots(1, 1)
-    sc = ax.imshow(
-        Cij_raw, 
-        cmap="Blues", 
-        origin="lower",
-        vmax=None,
-    )
-    fig.colorbar(sc, label="Covariation")
-    ax.set_xlabel("(Retained) Position i")
-    ax.set_ylabel("(Retained) Position j")
-    ax.set_title("Covariance Matrix")
-    plt.savefig(f"{IMGDIR}/covariance_matrix.png")
-    plt.close()
+    if Cij_raw is not None:
+        fig, ax = plt.subplots(1, 1)
+        sc = ax.imshow(
+            Cij_raw, 
+            cmap="Blues", 
+            origin="lower",
+            vmax=None,
+        )
+        fig.colorbar(sc, label="Covariation")
+        ax.set_xlabel("(Retained) Position i")
+        ax.set_ylabel("(Retained) Position j")
+        ax.set_title("Covariance Matrix")
+        plt.savefig(f"{IMGDIR}/covariance_matrix.png")
+        plt.close()
 
     # Plot SCA Matrix
     fig, ax = plt.subplots(1, 1)
@@ -307,7 +315,7 @@ def main(args):
     
     # Perform bootstrapping to get eigenvalue null distribution
     DO_SHUFFLING = N_BOOT > 0
-    evals_shuff_saveas = f"{SCADIR}/evals_shuff.npy"
+    evals_shuff_saveas = "evals_shuff.npy"
     
     def shuffle_columns(m, rng=None):
         rng = np.random.default_rng(rng)
@@ -333,13 +341,21 @@ def main(args):
             cij_shuff = res["Cij_corr"]
             evals = np.linalg.eigvalsh(cij_shuff)
             evals_shuff[iteridx] = np.flip(evals)
-        np.save(evals_shuff_saveas, evals_shuff)
-    elif os.path.isfile(evals_shuff_saveas):
+        np.save(f"{SCADIR}/{evals_shuff_saveas}", evals_shuff)
+    elif LOAD_DATA:
         if verbosity:
             print("Skipping bootstrap. Loading existing null evals at: ".format(
-                evals_shuff_saveas
+                f"{LOAD_DATA}/{evals_shuff_saveas}"
             ))
-        evals_shuff = np.load(evals_shuff_saveas)
+        evals_shuff = np.load(f"{LOAD_DATA}/{evals_shuff_saveas}")
+        N_BOOT = evals_shuff.shape[0]
+    elif os.path.isfile(f"{SCADIR}/{evals_shuff_saveas}"):
+        if verbosity:
+            print("Skipping bootstrap. Loading existing null evals at: ".format(
+                f"{SCADIR}/{evals_shuff_saveas}"
+            ))
+        evals_shuff = np.load(f"{SCADIR}/{evals_shuff_saveas}")
+        N_BOOT = evals_shuff.shape[0]
     else:
         evals_shuff = []
         if verbosity:
@@ -417,7 +433,8 @@ def main(args):
     plt.close()
 
     # Dendrogram of SCA matrix
-    plot_dendrogram(Cij, nclusters=kstar, imgdir=IMGDIR)
+    if DENDRO:
+        plot_dendrogram(Cij, nclusters=kstar, imgdir=IMGDIR)
     
     # Apply ICA
     rho = 1e-1
@@ -428,9 +445,60 @@ def main(args):
         max_attempts=5, 
         verbosity=verbosity,
     )
+
+    # Fit t-distribution to each IC
+    t_dists_info, top_idxs = fit_t_distributions(
+        v_ica_normalized, p=pstar
+    )
+    all_imp_idxs = np.concatenate(top_idxs, axis=0)
+    if verbosity:
+        print(f"Identified {len(all_imp_idxs)} important positions (with repeats).")
+    all_imp_idxs_unique = np.unique(all_imp_idxs)
+    if verbosity:
+        print(f"Identified {len(all_imp_idxs_unique)} important positions (w/o repeats).")
+    
+    np.save(f"{SCADIR}/all_important_positions.npy", all_imp_idxs_unique)
+    
+    # Plot t-distributions
+    plot_t_distributions(v_ica_normalized, t_dists_info, IMGDIR)
     
     # Get groups from top p% empirical distribution
-    groups = get_groups(v_ica_normalized, p=pstar)
+    # groups = get_groups(v_ica_normalized, p=pstar, method="t-dist")
+    groups = []
+    for i, idx_set in enumerate(top_idxs):
+        group = []
+        for idx in idx_set:
+            if np.sum(all_imp_idxs == idx) == 1:
+                # Position is uniquely assigned to a group
+                group.append(idx)
+            elif np.sum(all_imp_idxs == idx) > 1:
+                # Position is not uniquely assigned to a group.
+                # Assign to group only if projection onto ith IC is maximal
+                if np.all(v_ica_normalized[idx,:] >= v_ica_normalized[idx,i]):
+                    group.append(idx)
+            else:
+                raise RuntimeError("Index should be found amoung all...")
+        groups.append(np.array(group))
+
+    # Subset the SCA matrix into grouped important positions
+    group_idxs_all = np.concatenate(groups, axis=0)
+    sca_mat_imp = Cij[group_idxs_all,:]
+    sca_mat_imp = sca_mat_imp[:,group_idxs_all]
+
+    # Plot SCA Matrix "Important" subset
+    fig, ax = plt.subplots(1, 1)
+    sc = ax.imshow(
+        sca_mat_imp, 
+        cmap="Blues", 
+        origin="lower",
+        vmax=None,
+    )
+    fig.colorbar(sc, label="Covariation")
+    ax.set_xlabel("(Important) Position i")
+    ax.set_ylabel("(Important) Position j")
+    ax.set_title("SCA Matrix (Groups)")
+    plt.savefig(f"{IMGDIR}/sca_matrix_important_subset.png")
+    plt.close()
 
     # Save groups in MSA coordinates
     subdir = f"{OUTDIR}/groups"
@@ -565,15 +633,38 @@ def apply_ica(
     return v_ica_normalized, v_ica, w_ica
 
 
-def get_groups(v_ica_normalized, p=95):
+def fit_t_distributions(v, p):
+    """Fit a t-dist to each IC, and return indices in the pth pctl of each.
+    """
+    t_dists_info = []
+    top_idxs = []
+    for i in range(v.shape[1]):
+        vi = v[:,i]
+        df, loc, scale = scipy.stats.t.fit(vi)
+        cutoff = scipy.stats.t.ppf(p/100, df, loc=loc, scale=scale)
+        idxs = np.where(vi >= cutoff)[0]
+        order = np.flip(np.argsort(vi[idxs]))
+        idxs = idxs[order] # reorder by decreasing contribution
+        t_dists_info.append(
+            {"df": df, "loc": loc, "scale": scale, "cutoff": cutoff}
+        )
+        top_idxs.append(idxs)
+    return t_dists_info, top_idxs
+
+
+def get_groups(v, p=95, method="t-dist"):
     groups = []
-    to_be_assigned = np.ones(len(v_ica_normalized), dtype=bool)
-    for i in range(v_ica_normalized.shape[1]):
-        top_p_idxs = np.where(
-            (v_ica_normalized[:,i] >= np.percentile(
-                v_ica_normalized[to_be_assigned,i], p)) \
-            & (to_be_assigned)
-        )[0]
+    to_be_assigned = np.ones(len(v), dtype=bool)
+    for i in range(v.shape[1]):
+        if method == "ecdf":
+            screen = v[:,i] >= np.percentile(v[to_be_assigned,i], p)
+        elif method == "t-dist":
+            df, loc, scale = scipy.stats.t.fit(v[:,i])
+            cutoff = scipy.stats.t.ppf(p/100, df, loc=loc, scale=scale)
+            screen = v[:,i] >= cutoff
+        else:
+            raise RuntimeError(f"Unknown method `{method}` for group calling.")
+        top_p_idxs = np.where(screen & to_be_assigned)[0]
         to_be_assigned[top_p_idxs] = False
         groups.append(top_p_idxs)
     return groups
@@ -765,6 +856,34 @@ def plot_sequence_similarity(
     plt.close()
     return
 
+
+def plot_t_distributions(v, t_dists_info, imgdir):
+    """Plot t distributions"""
+    npos, nics = v.shape
+    fig, axes = plt.subplots(nics, 1, figsize=(5, 3 * nics))    
+    for i in range(v.shape[1]):
+        vi = v[:,i]
+        tinfo = t_dists_info[i]
+        ax = axes[i]
+        ax.hist(
+            vi, bins=20, density=True, alpha=0.5, color="skyblue",
+        )
+        xlims = ax.get_xlim()
+        ylims = ax.get_ylim()
+        x = np.linspace(*xlims, 100)
+        y = scipy.stats.t.pdf(
+            x, df=tinfo["df"], loc=tinfo["loc"], scale=tinfo["scale"], 
+        )
+        ax.vlines(tinfo["cutoff"], *ylims, colors="k", linestyles="--")
+        ax.plot(x, y)
+        ax.set_xlim(*xlims)
+        ax.set_ylim(*ylims)
+        ax.set_xlabel(f"IC {i+1}")
+        ax.set_ylabel(f"p")
+        ax.set_title(f"IC {i+1} Student's $t$")
+    plt.tight_layout()
+    plt.savefig(f"{imgdir}/t_distributions.png", bbox_inches="tight")
+    plt.close()
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
