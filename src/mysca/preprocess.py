@@ -5,6 +5,7 @@
 import numpy as np
 from numpy.typing import NDArray
 from collections import Counter
+import tqdm
 
 from mysca.mappings import SymMap, DEFAULT_MAP
 
@@ -19,6 +20,7 @@ def preprocess_msa(
         reference_similarity_thresh: float = 0.2,
         sequence_similarity_thresh: float = 0.8,
         position_gap_thresh: float = 0.2, 
+        use_pbar: bool = False,
         verbosity: int = 1, 
 ):
     """Run preprocessing steps on a given MSA matrix.
@@ -41,6 +43,7 @@ def preprocess_msa(
             sequences are clustered together for weighting purposes. Default 0.8.
         (float) position_gap_thresh: Freq of gaps γ_pos above which a position 
             (i.e. column) is removed after weighting. Default 0.2.
+        (bool) use_pbar: show progress bar for scans over sequences.
         (int) verbosity: verbosity level. Default 1.
     
     Returns:
@@ -91,6 +94,8 @@ def preprocess_msa(
     xmsa = np.eye(NUM_SYMS, dtype=bool)[msa][:,:,:-1]
 
     #~~~ Remove columns (i.e. positions) with too many gaps
+    if verbosity:
+        print("Removing positions with too many gaps...")
     gapfreqs = np.sum(msa == GAP, axis=0) / msa.shape[0]
     screen = gapfreqs < gap_truncation_thresh
     msa = msa[:,screen]  # keep columns with gap freq < gap_truncation_thresh
@@ -102,6 +107,8 @@ def preprocess_msa(
     assert len(retained_positions) == msa.shape[1], "Mismatch"
 
     #~~~ Remove rows (i.e. sequences) with too many gaps
+    if verbosity:
+        print("Removing sequences with too many gaps...")
     gapfreqs = np.sum(msa == GAP, axis=1) / msa.shape[1]
     screen = gapfreqs < sequence_gap_thresh
     msa = msa[screen,:]  # keep rows with gap freq < sequence_gap_thresh
@@ -126,6 +133,8 @@ def preprocess_msa(
         ref_results["ref_similarity"] = ref_similarity
         
         # Remove rows too dissimilar from the reference
+        if verbosity:
+            print("Removing sequences too dissimilar from reference...")
         screen = ref_similarity >= reference_similarity_thresh
         msa = msa[screen,:]  # keep rows with gap freq < reference_similarity_thresh
         xmsa = xmsa[screen,:,:]
@@ -139,13 +148,17 @@ def preprocess_msa(
         ref_results = {}
 
     #~~~ Compute sequence weights
+    if verbosity:
+        print("Computing sequence weights (round 1)...")
     ws = np.nan * np.ones(msa.shape[0])
-    for i, s in enumerate(msa):
+    for i, s in tqdm.tqdm(enumerate(msa), total=len(msa), disable=not use_pbar):
         similarities = np.sum(s == msa, axis=1) / msa.shape[1]
         screen = similarities >= sequence_similarity_thresh
         ws[i] = 1 / screen.sum()
 
     #~~~ Remove positions with too many (weighted) gaps
+    if verbosity:
+        print("Removing positions with too many (weighted) gaps...")
     fi0 = np.sum(ws[:,None] * (msa == GAP), axis=0) / ws.sum()
     screen = fi0 < position_gap_thresh
     msa = msa[:,screen]
@@ -157,8 +170,10 @@ def preprocess_msa(
     assert len(retained_positions) == msa.shape[1], "Mismatch"
 
     #~~~ Re-compute sequence weights
+    if verbosity:
+        print("Computing sequence weights (round 2)...")
     ws = np.nan * np.ones(msa.shape[0])
-    for i, s in enumerate(msa):
+    for i, s in tqdm.tqdm(enumerate(msa), total=len(msa), disable=not use_pbar):
         similarities = np.sum(s == msa, axis=1) / msa.shape[1]
         screen = similarities >= sequence_similarity_thresh
         ws[i] = 1 / screen.sum()

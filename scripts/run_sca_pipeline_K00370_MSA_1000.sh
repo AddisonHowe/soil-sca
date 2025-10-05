@@ -13,10 +13,10 @@ position_gap_thresh=0.2
 regularization=0.03
 background=None
 n_top_conserved=10
-n_boot=20
+n_boot=0
 kstar=0
 
-RUN_PYMOL=true
+RUN_PYMOL=false
 pymol_reference="1Q16"
 
 
@@ -49,6 +49,6 @@ if [[ ${RUN_PYMOL} == "true" ]]; then
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
             --outdir ${outdir}/pymol_images \
-            --groups 1 2 3 4 5
+            --groups -1
     done
 fi

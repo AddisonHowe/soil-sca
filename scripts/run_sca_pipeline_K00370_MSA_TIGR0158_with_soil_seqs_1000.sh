@@ -13,10 +13,10 @@ position_gap_thresh=0.2
 regularization=0.03
 background=None
 n_top_conserved=10
-n_boot=10
+n_boot=0
 kstar=0
 
-RUN_PYMOL=true
+RUN_PYMOL=false
 pymol_reference="1Q16"
 
 
@@ -33,7 +33,8 @@ runsca -msa $msafpath -o $outdir \
     --n_top_conserved $n_top_conserved \
     --n_boot $n_boot \
     --kstar $kstar \
-    --pbar
+    --pbar \
+    --nodendro --use_jax #--load_data ${outdir}/sca_results
 
 
 # Run pymol script

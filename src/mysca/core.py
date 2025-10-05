@@ -6,6 +6,9 @@ import numpy as np
 from numpy.typing import NDArray
 import tqdm
 
+import jax
+jax.config.update("jax_enable_x64", True)
+
 from mysca.mappings import SymMap, DEFAULT_MAP
 
 
@@ -20,6 +23,7 @@ def run_sca(
         pbar: bool = True,
         leave_pbar: bool = True,
         verbosity: int = 1,
+        use_jax: bool = False,
 ):
     """Run SCA algorithm on given MSA matrix
 
@@ -34,6 +38,7 @@ def run_sca(
         pbar (bool, optional): _description_. Defaults to True.
         leave_pbar (bool, optional): _description_. Defaults to True.
         verbosity (int, optional): _description_. Defaults to 1.
+        use_jax (bool, optional): Use JAX for computations. Defaults to False.
 
     Returns:  # TODO
         _type_: _description_
@@ -57,14 +62,12 @@ def run_sca(
     fia = (1 - lam) * np.sum(ws_norm[:,None,None] * xmsa, axis=0) + lam / nsyms
 
     # Compute correlated conservation
-    fijab = np.full([npos, npos, naas, naas], np.nan)
-    for i in tqdm.trange(npos, disable=not pbar, leave=leave_pbar):
-        ci = xmsa[:,i,:]
-        for j in range(i, npos):
-            cj = xmsa[:,j,:]
-            f = (1 - lam) * (ci.T @ (ws_norm[:, None] * cj)) + lam / nsyms**2
-            fijab[i,j,:,:] = f
-            fijab[j,i,:,:] = f.T
+    fijab = compute_fijab(
+        xmsa, ws_norm, lam, nsyms, 
+        pbar=pbar, 
+        leave_pbar=leave_pbar,
+        version="v2" if use_jax else "v1"
+    )
 
     if qa is None:
         qa = np.zeros(naas)
@@ -83,11 +86,9 @@ def run_sca(
 
     Cijab_raw = fijab - fia[:,None,:,None] * fia[None,:,None,:]
     Cij_raw = np.sqrt(np.sum(np.square(Cijab_raw), axis=(-1, -2)))
-    # Cij_raw = (Cij_raw + Cij_raw.T) / 2
     phi_ia = np.log((fia * (1 - qa)) / ((1 - fia) * qa))
     Cijab_corr = phi_ia[:,None,:,None] * phi_ia[None,:,None,:] * Cijab_raw
     Cij_corr = np.sqrt(np.sum(np.square(Cijab_corr), axis=(-1,-2)))
-    # Cij = (Cij + Cij.T) / 2
 
     if return_keys == "all":
         results["fi0"] = fi0
@@ -116,7 +117,9 @@ def run_ica(
     """Implements ICA using the infomax algorithm.
 
     Independent components V^* are computed by applying the returned matrix
-    W to the eigenvectors in input V: V* = WV, with V of shape (m, k)
+    W to the eigenvectors in input V: V* = WV, with V of shape (k, m). If 
+    working instead with eigenvectors in the columns of V, then the 
+    corresponding transform is given by the matrix product V* = VW^T.
 
     Refs: 
         [1] Bell and Sejnowski, 1995
@@ -150,3 +153,52 @@ def run_ica(
         itercount += 1
     print(f"Did not converge in {maxiter} iterations")
     return None, np.max(np.abs(dw))
+
+
+def compute_fijab(
+        xmsa, ws_norm, lam, nsyms, pbar=False, leave_pbar=False, 
+        version="v1",
+):
+    if version == "v1":
+        return _compute_fijab_v1(
+            xmsa, ws_norm, lam, nsyms, pbar=pbar, leave_pbar=leave_pbar
+        )
+    elif version == "v2":
+        return _compute_fijab_v2(
+            xmsa, ws_norm, lam, nsyms, pbar=pbar, leave_pbar=leave_pbar
+        )
+    else:
+        raise RuntimeError(f"Unknown version to compute fijab: {version}")
+
+
+def _compute_fijab_v1(xmsa, ws_norm, lam, nsyms, pbar=False, leave_pbar=False):
+    """Standard implementation"""
+    _, npos, naas = xmsa.shape
+    fijab = np.full([npos, npos, naas, naas], np.nan)
+    for i in tqdm.trange(npos, disable=not pbar, leave=leave_pbar):
+        ci = xmsa[:,i,:]
+        for j in range(i, npos):
+            cj = xmsa[:,j,:]
+            f = (1 - lam) * (ci.T @ (ws_norm[:, None] * cj)) + lam / nsyms**2
+            fijab[i,j,:,:] = f
+            fijab[j,i,:,:] = f.T
+    return fijab
+
+
+def _compute_fijab_v2(xmsa, ws_norm, lam, nsyms, pbar=False, leave_pbar=False):
+    """JAX implementation"""
+    _, npos, naas = xmsa.shape
+    fijab = np.full([npos, npos, naas, naas], np.nan)
+
+    @jax.jit
+    def compute_f(ci, cj, ws_norm, lam, nsyms):
+        return (1 - lam) * (ci.T @ (ws_norm[:, None] * cj)) + lam / nsyms**2
+    
+    for i in tqdm.trange(npos, disable=not pbar, leave=leave_pbar):
+        ci = xmsa[:,i,:]
+        for j in range(i, npos):
+            cj = xmsa[:,j,:]
+            f = compute_f(ci, cj, ws_norm, lam, nsyms)
+            fijab[i,j,:,:] = f
+            fijab[j,i,:,:] = f.T
+    return fijab

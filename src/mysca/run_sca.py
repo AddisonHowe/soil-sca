@@ -49,6 +49,10 @@ def parse_args(args):
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--nodendro", action="store_true", 
                         help="Skip dendrogram plots")
+    parser.add_argument("--use_jax", action="store_true", 
+                        help="Use JAX in computations.")
+    parser.add_argument("--save_all", action="store_true", 
+                        help="Save all SCA results (includes large files).")
     parser.add_argument("--load_data", type=str, default="", 
                         help="SCA directory to load precomputed data from")
     
@@ -95,6 +99,8 @@ def main(args):
     SEED = args.seed
     DENDRO = not args.nodendro
     LOAD_DATA = args.load_data
+    USE_JAX = args.use_jax
+    SAVE_ALL = args.save_all
 
     gap_truncation_thresh = args.gap_truncation_thresh
     sequence_gap_thresh = args.sequence_gap_thresh
@@ -160,6 +166,7 @@ def main(args):
         reference_similarity_thresh=reference_similarity_thresh,
         sequence_similarity_thresh=sequence_similarity_thresh,
         position_gap_thresh=position_gap_thresh,
+        use_pbar=PBAR,
         verbosity=1,
     )
 
@@ -215,6 +222,8 @@ def main(args):
         )
     
     # Run SCA
+    if verbosity:
+        print("Running SCA...")
     if not LOAD_DATA:
         sca_results = run_sca(
             xmsa, weights,
@@ -222,18 +231,26 @@ def main(args):
             mapping=sym_map,
             background_arr=background_freq_array,
             regularization=regularization,
-            return_keys=["Di", "Cij_raw", "Cij_corr"],
+            return_keys="all",
             pbar=PBAR,
             leave_pbar=True,
+            use_jax=USE_JAX,
+            verbosity=verbosity,
         )
         Di = sca_results["Di"]
         Cij_raw = sca_results["Cij_raw"]
         Cij = sca_results["Cij_corr"]
-        del sca_results  # relieve memory
-
+        
         # Save SCA results
         np.save(f"{SCADIR}/conservation.npy", Di)
         np.save(f"{SCADIR}/sca_matrix.npy", Cij)
+        np.save(f"{SCADIR}/phi_ia.npy", sca_results["phi_ia"])
+        np.save(f"{SCADIR}/fi0.npy", sca_results["fi0"])
+        np.save(f"{SCADIR}/fia.npy", sca_results["fia"])
+        if SAVE_ALL:
+            np.save(f"{SCADIR}/Cijab_raw.npy", sca_results["Cijab_raw"])
+        
+        del sca_results  # relieve memory
     else:
         Di = np.load(f"{LOAD_DATA}/conservation.npy")
         Cij_raw = None
@@ -268,17 +285,13 @@ def main(args):
     plt.savefig(f"{IMGDIR}/positional_conservation.png")
     plt.close()
 
-    # Eigendecomposition of C_ij (raw and corrected)
-    # evals_cov, _ = np.linalg.eigh(Cij_raw)
-    # evals_cov = np.flip(evals_cov)
-
+    # Eigendecomposition of SCA matrix
+    # TODO: Possible issue since Cij need not be symmetric!
     evals_sca, evecs_sca = np.linalg.eigh(Cij)
     evals_sca = np.flip(evals_sca)
     evecs_sca = np.flip(evecs_sca, axis=1)
 
     if verbosity:
-        # print(f"Eigenvalue spectrum of Covariance Matrix: " + 
-        #     f"{evals_cov.min():.3g}, {evals_cov.max():.3f}")
         print(f"Eigenvalue spectrum of SCA Matrix: " + 
             f"{evals_sca.min():.3g}, {evals_sca.max():.3f}")
     
@@ -289,6 +302,7 @@ def main(args):
             Cij_raw, 
             cmap="Blues", 
             origin="lower",
+            interpolation="none",
             vmax=None,
         )
         fig.colorbar(sc, label="Covariation")
@@ -304,6 +318,7 @@ def main(args):
         Cij, 
         cmap="Blues", 
         origin="lower",
+        interpolation="none",
         vmax=None,
     )
     fig.colorbar(sc, label="Covariation")
@@ -344,14 +359,14 @@ def main(args):
         np.save(f"{SCADIR}/{evals_shuff_saveas}", evals_shuff)
     elif LOAD_DATA:
         if verbosity:
-            print("Skipping bootstrap. Loading existing null evals at: ".format(
+            print("Skipping bootstrap. Loading existing null evals at: {}".format(
                 f"{LOAD_DATA}/{evals_shuff_saveas}"
             ))
         evals_shuff = np.load(f"{LOAD_DATA}/{evals_shuff_saveas}")
         N_BOOT = evals_shuff.shape[0]
     elif os.path.isfile(f"{SCADIR}/{evals_shuff_saveas}"):
         if verbosity:
-            print("Skipping bootstrap. Loading existing null evals at: ".format(
+            print("Skipping bootstrap. Loading existing null evals at: {}".format(
                 f"{SCADIR}/{evals_shuff_saveas}"
             ))
         evals_shuff = np.load(f"{SCADIR}/{evals_shuff_saveas}")
@@ -439,12 +454,13 @@ def main(args):
     # Apply ICA
     rho = 1e-1
     tol = 1e-7
-    v_ica_normalized, _, _ = apply_ica(
+    v_ica_normalized, _, w_ica = apply_ica(
         sig_evecs_sca, 
         rho=rho, tol=tol, maxiter=1E6, 
         max_attempts=5, 
         verbosity=verbosity,
     )
+    np.save(f"{SCADIR}/w_ica.npy", w_ica)
 
     # Fit t-distribution to each IC
     t_dists_info, top_idxs = fit_t_distributions(
@@ -491,6 +507,7 @@ def main(args):
         sca_mat_imp, 
         cmap="Blues", 
         origin="lower",
+        interpolation="none",
         vmax=None,
     )
     fig.colorbar(sc, label="Covariation")
@@ -811,7 +828,7 @@ def plot_dendrogram(
         rearranged_data, 
         aspect='auto', 
         cmap='Blues',
-        interpolation='nearest', 
+        interpolation='none', 
         origin='lower', 
         # vmin=0, vmax=1,
     )
@@ -848,7 +865,8 @@ def plot_sequence_similarity(
 
     sc = ax2.imshow(
         similarity_matrix[np.ix_(idxs, idxs)],
-        vmin=0, vmax=1
+        vmin=0, vmax=1,
+        interpolation="none",
     )
     plt.colorbar(sc)
     plt.tight_layout()

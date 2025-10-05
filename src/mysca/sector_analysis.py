@@ -34,9 +34,7 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def main(args):
-    print(f"Handled args: {args}")
-    
+def main(args):    
     # Process command line args
     sca_results_dir = args.sca_results_dir
     groups_fpath = args.groups_fpath
@@ -237,7 +235,7 @@ def apply_pca(data, n_components):
     return data_pca, pcs, exp_var_ratio
 
 
-def add_noise(data, scale=0.01):
+def add_noise(data, scale=0.005):
     r = scale * (data.max() - data.min())
     return data + r * np.random.standard_normal(len(data))
 

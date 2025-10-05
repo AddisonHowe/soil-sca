@@ -8,7 +8,9 @@ dependencies:
   - scikit-learn
   - pandas
   - matplotlib
+  - seaborn
   - biopython
+  - jax
   - tqdm
   - ipykernel
   - ipywidgets

@@ -15,3 +15,19 @@
 MSAs are produced using [clustal-omega](https://www.ebi.ac.uk/jdispatcher/msa/clustalo?stype=protein&outfmt=fa) with fasta output format and are named in accordance with the input fasta file.
 
 ## Structures
+
+
+## Misc.
+
+The metadata files `misc/metadata_TIGR01580.tsv` and `misc/taxids_TIGR01580.txt` are generated with the following script:
+
+```bash
+sh data/K00370/misc_scripts/gen_metadata.sh
+```
+
+Then taxonomic information for all taxa in the TIGR01580 accession can be compiled through the script:
+
+```bash
+python data/K00370/misc_scripts/fetch_taxid_info.py -i data/K00370/misc/taxids_TIGR01580.txt -o data/K00370/misc/taxids_TIGR01580_metadata.tsv
+```
+
