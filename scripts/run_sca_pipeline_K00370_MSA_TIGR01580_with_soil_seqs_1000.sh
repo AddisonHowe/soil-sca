@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ###~~~~~~~~~~ K00370 TIGR01580_with_soil_seqs_1000
 msafpath="data/K00370/msas/MSA_TIGR01580_with_soil_seqs_1000.aln-fasta"
 structdir="data/K00370/structures"

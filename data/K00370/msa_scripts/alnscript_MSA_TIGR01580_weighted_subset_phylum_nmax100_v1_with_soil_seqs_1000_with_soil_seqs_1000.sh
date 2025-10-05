@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 datdir=data/K00370
-seq_fname=TIGR01580_weighted_subset_phylum_nmax100_v1_with_soil_seqs_1000_with_soil_seqs_1000.fasta
-out_fname=MSA_TIGR01580_weighted_subset_phylum_nmax100_v1_with_soil_seqs_1000_with_soil_seqs_1000
+seq_fname=TIGR01580_weighted_subset_phylum_nmax100_v1_with_soil_seqs_1000.fasta
+out_fname=MSA_TIGR01580_weighted_subset_phylum_nmax100_v1_with_soil_seqs_1000
 
 nthreads=16
 
