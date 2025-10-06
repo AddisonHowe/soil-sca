@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ###~~~~~~~~~~ K00370 MSA_1000
 msafpath="data/K00370/msas/MSA_1000.aln-fasta"
 structdir="data/K00370/structures"
@@ -16,7 +18,7 @@ n_top_conserved=10
 n_boot=0
 kstar=0
 
-RUN_PYMOL=false
+RUN_PYMOL=true
 pymol_reference="1Q16"
 
 
@@ -33,7 +35,8 @@ runsca -msa $msafpath -o $outdir \
     --n_top_conserved $n_top_conserved \
     --n_boot $n_boot \
     --kstar $kstar \
-    --pbar
+    --pbar \
+    --nodendro --save_all --load_data ${outdir}/sca_results
 
 
 # Run pymol script

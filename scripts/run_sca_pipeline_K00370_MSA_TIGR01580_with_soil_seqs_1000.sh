@@ -18,7 +18,7 @@ n_top_conserved=10
 n_boot=0
 kstar=0
 
-RUN_PYMOL=false
+RUN_PYMOL=true
 pymol_reference="1Q16"
 
 
@@ -36,7 +36,7 @@ runsca -msa $msafpath -o $outdir \
     --n_boot $n_boot \
     --kstar $kstar \
     --pbar \
-    --nodendro --use_jax #--load_data ${outdir}/sca_results
+    --nodendro --save_all --use_jax --load_data ${outdir}/sca_results
 
 
 # Run pymol script
