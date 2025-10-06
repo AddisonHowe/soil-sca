@@ -521,7 +521,7 @@ def main(args):
     subdir = f"{OUTDIR}/groups"
     os.makedirs(subdir, exist_ok=True)
     for i in range(len(groups)):
-        np.save(f"{subdir}/group_{i+1}_msapos.npy", groups[i])
+        np.save(f"{subdir}/group_{i}_msapos.npy", groups[i])
 
     # Plot data and groups in EV coords (2-dimensional)
     EVIDXS_AND_GROUP_IDXS = [  # ((EVi, EVj), [group_indices])
@@ -592,13 +592,13 @@ def main(args):
         msa_obj_orig, retained_sequences, groups, group_rawseq_positions
     )
     for gidx in range(len(groups)):
-        subdir = f"{OUTDIR}/sca_groups/group_{gidx + 1}"
+        subdir = f"{OUTDIR}/sca_groups/group_{gidx}"
         os.makedirs(subdir, exist_ok=True)
         for i, seqidx in enumerate(retained_sequences):
             entry = msa_obj_orig[int(seqidx)]
             id = entry.id
             group_arr = group_rawseq_positions_by_entry[id][gidx]
-            np.save(f"{subdir}/group_{gidx + 1}_{id}.npy", group_arr)
+            np.save(f"{subdir}/group_{gidx}_{id}.npy", group_arr)
     
     if verbosity:
         print("Done!")
@@ -720,19 +720,19 @@ def plot_data_2d(
             data[g,axi], data[g,axj],
             alpha=1, 
             edgecolor='k',
-            label=f"group {gidx + 1}",
+            label=f"group {gidx}",
         )
     ax.plot(0, 0, "ro")
     rx, ry = ax.get_xlim()[1], ax.get_ylim()[1]
     ax.plot([0, rx], [0, 0], "k-", alpha=0.5)
     ax.plot([0, 0], [0, ry], "k-", alpha=0.5)
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.set_xlabel(f"{ic_or_ev.upper()} {axi + 1}")
-    ax.set_ylabel(f"{ic_or_ev.upper()} {axj + 1}")
+    ax.set_xlabel(f"{ic_or_ev.upper()} {axi}")
+    ax.set_ylabel(f"{ic_or_ev.upper()} {axj}")
     ax.set_title(title)
-    groupstr = "".join([str(i+1) for i in group_idxs])
+    groupstr = "".join([str(i) for i in group_idxs])
     plt.tight_layout()
-    plt.savefig(f"{imgdir}/{ic_or_ev}{axi+1}{axj+1}_groups_{groupstr}.png",
+    plt.savefig(f"{imgdir}/{ic_or_ev}{axi}{axj}_groups_{groupstr}.png",
                 bbox_inches="tight")
     plt.close()
     return
@@ -772,7 +772,7 @@ def plot_data_3d(
             data[g,axi], data[g,axj], data[g,axk], 
             alpha=1, 
             edgecolor='k',
-            label=f"group {gidx + 1}",
+            label=f"group {gidx}",
         )
     ax.plot(0, 0, "ro")
     rx, ry, rz = ax.get_xlim()[1], ax.get_ylim()[1], ax.get_zlim()[1]
@@ -781,13 +781,13 @@ def plot_data_3d(
     ax.plot([0, 0], [0, 0], [0, rz], "k-", alpha=0.5)
     ax.view_init(elev=30, azim=40)   # elev ~ tilt, azim ~ around z
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.set_xlabel(f"{ic_or_ev.upper()} {axi + 1}")
-    ax.set_ylabel(f"{ic_or_ev.upper()} {axj + 1}")
-    ax.set_zlabel(f"{ic_or_ev.upper()} {axk + 1}")
+    ax.set_xlabel(f"{ic_or_ev.upper()} {axi}")
+    ax.set_ylabel(f"{ic_or_ev.upper()} {axj}")
+    ax.set_zlabel(f"{ic_or_ev.upper()} {axk}")
     ax.set_title(title)
-    groupstr = "".join([str(i+1) for i in group_idxs])
+    groupstr = "".join([str(i) for i in group_idxs])
     plt.tight_layout()
-    plt.savefig(f"{imgdir}/{ic_or_ev}{axi+1}{axj+1}{axk+1}_groups_{groupstr}.png", 
+    plt.savefig(f"{imgdir}/{ic_or_ev}{axi}{axj}{axk}_groups_{groupstr}.png", 
                 bbox_inches="tight")
     plt.close()
     return
@@ -896,12 +896,13 @@ def plot_t_distributions(v, t_dists_info, imgdir):
         ax.plot(x, y)
         ax.set_xlim(*xlims)
         ax.set_ylim(*ylims)
-        ax.set_xlabel(f"IC {i+1}")
+        ax.set_xlabel(f"IC {i}")
         ax.set_ylabel(f"p")
-        ax.set_title(f"IC {i+1} Student's $t$")
+        ax.set_title(f"IC {i} Student's $t$")
     plt.tight_layout()
     plt.savefig(f"{imgdir}/t_distributions.png", bbox_inches="tight")
     plt.close()
+
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])

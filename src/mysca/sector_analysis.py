@@ -92,7 +92,7 @@ def main(args):
     # List the contents of the directory defining sectors by MSA positions
     sector_files = os.listdir(sector_dir)
     if sector_idxs[0] == 0:
-        sector_idxs = [i + 1 for i in range(len(sector_files))]
+        sector_idxs = [i for i in range(len(sector_files))]
 
     # Subset the MSA to the sequences of interest
     retained_sequences_screen = np.isin(retained_seqids, df["seqid"].values)
