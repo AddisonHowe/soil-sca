@@ -23,20 +23,20 @@ pymol_reference="1Q16"
 
 
 # Run SCA script
-runsca -msa $msafpath -o $outdir \
-    --gap_truncation_thresh $gap_truncation_thresh \
-    --sequence_gap_thresh $sequence_gap_thresh \
-    --reference "$reference" \
-    --reference_similarity_thresh $reference_similarity_thresh \
-    --sequence_similarity_thresh $sequence_similarity_thresh \
-    --position_gap_thresh $position_gap_thresh \
-    --regularization $regularization \
-    --background $background \
-    --n_top_conserved $n_top_conserved \
-    --n_boot $n_boot \
-    --kstar $kstar \
-    --pbar \
-    --nodendro --save_all --seed 6857
+# runsca -msa $msafpath -o $outdir \
+#     --gap_truncation_thresh $gap_truncation_thresh \
+#     --sequence_gap_thresh $sequence_gap_thresh \
+#     --reference "$reference" \
+#     --reference_similarity_thresh $reference_similarity_thresh \
+#     --sequence_similarity_thresh $sequence_similarity_thresh \
+#     --position_gap_thresh $position_gap_thresh \
+#     --regularization $regularization \
+#     --background $background \
+#     --n_top_conserved $n_top_conserved \
+#     --n_boot $n_boot \
+#     --kstar $kstar \
+#     --pbar \
+#     --nodendro --save_all --seed 6857
 
 
 # Run pymol script
