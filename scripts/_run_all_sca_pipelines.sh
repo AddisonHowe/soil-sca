@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+sh scripts/run_sca_pipeline_K00370_MSA_1000.sh
+sh scripts/run_sca_pipeline_S1Ahalabi_s1Ahalabi_1470_nosnakes.sh
+sh scripts/run_sca_pipeline_K00370_MSA_TIGR01580_weighted_subset_phylum_nmax100_v1_with_soil_seqs_1000.sh
+sh scripts/run_sca_pipeline_K00370_MSA_TIGR01580_with_soil_seqs_1000.sh

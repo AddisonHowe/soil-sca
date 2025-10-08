@@ -8,7 +8,6 @@ reference="1Q16"
 for f in ${datdir}/structures/*.pdb; do
     s=$(basename $f)
     s=${s/.pdb/}
-    echo $s
     python scripts/pymol_sca.py \
         -s ${s} \
         -r ${reference} \

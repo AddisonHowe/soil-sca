@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_hex
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib import colors
 from mpl_toolkits.mplot3d import Axes3D
 import tqdm as tqdm
 import json
@@ -18,7 +19,7 @@ import json
 import scipy
 from scipy import sparse
 import scipy.cluster.hierarchy as sch
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, squareform
 
 from mysca.io import load_msa
 from mysca.preprocess import preprocess_msa
@@ -28,6 +29,7 @@ from mysca.helpers import get_top_k_conserved_retained_positions
 from mysca.helpers import get_rawseq_positions_in_groups
 from mysca.helpers import get_group_rawseq_positions_by_entry
 from mysca.helpers import get_rawseq_indices_of_msa
+from mysca.constants import SECTOR_COLORS
 
 DEFAULT_BACKGROUND_FREQ = {
         'A': 0.078, 'C': 0.020, 'D': 0.053, 'E': 0.063,
@@ -55,6 +57,8 @@ def parse_args(args):
                         help="Save all SCA results (includes large files).")
     parser.add_argument("--load_data", type=str, default="", 
                         help="SCA directory to load precomputed data from")
+    parser.add_argument("--sector_cmap", type=str, default="default",
+                        choices=["none", "default"])
     
     sca_params = parser.add_argument_group("SCA parameters")
     sca_params.add_argument("--gap_truncation_thresh", type=float, default=0.4,
@@ -81,7 +85,7 @@ def parse_args(args):
     sca_params.add_argument("-k", "--kstar", type=int, default=0, 
                             help="Value of k_start to override bootstrap estimate.")
     sca_params.add_argument("-p", "--pstar", type=int, default=95, 
-                            help="Percentile defining IC groups.")    
+                            help="Percentile defining IC groups.")
 
     return parser.parse_args(args)
 
@@ -101,6 +105,7 @@ def main(args):
     LOAD_DATA = args.load_data
     USE_JAX = args.use_jax
     SAVE_ALL = args.save_all
+    sector_cmap = args.sector_cmap
 
     gap_truncation_thresh = args.gap_truncation_thresh
     sequence_gap_thresh = args.sequence_gap_thresh
@@ -135,6 +140,11 @@ def main(args):
     else:
         msg = f"Cannot handle given argument for background: {background_freq}"
         raise RuntimeError(msg)
+    
+    sector_color_set = {
+        "default": SECTOR_COLORS,
+        "none": None,
+    }[sector_cmap]
 
     SCADIR = os.path.join(OUTDIR, "sca_results")
     IMGDIR = os.path.join(OUTDIR, "images")
@@ -173,8 +183,12 @@ def main(args):
     np.save(f"{SCADIR}/retained_sequences.npy", retained_sequences)
     np.save(f"{SCADIR}/retained_positions.npy", retained_positions)
     np.save(f"{SCADIR}/retained_sequence_ids.npy", seqids)
+    np.save(f"{SCADIR}/fi0_pretrunc.npy", fi0_pretrunc)
     np.save(f"{SCADIR}/sequence_weights.npy", weights)
     np.save(f"{SCADIR}/msa.npy", msa)
+    np.savetxt(f"{SCADIR}/position_gap_thresh.txt", [position_gap_thresh])
+    np.savetxt(f"{SCADIR}/npos_original.txt", [NUM_POS_ORIG], fmt="%d")
+
     sparse.save_npz(
         f"{SCADIR}/Xsp.npz", 
         sparse.csr_matrix(xmsa.reshape([xmsa.shape[0], -1]))
@@ -262,6 +276,8 @@ def main(args):
     topk_conserved_msa_pos, top_conserved_Di = get_top_k_conserved_retained_positions(
         retained_positions, Di, n_top_conserved
     )
+    np.save(f"{SCADIR}/topk_conserved_msa_pos.npy", topk_conserved_msa_pos)
+    np.save(f"{SCADIR}/top_conserved_Di.npy", top_conserved_Di)
 
     if verbosity:
         print("top k conserved MSA positions:", topk_conserved_msa_pos)
@@ -420,6 +436,7 @@ def main(args):
     # Save kstar, full eigendecomp, and significant eigendecomp
     np.savetxt(f"{SCADIR}/kstar_identified.txt", [kstar_id], fmt="%d")
     np.savetxt(f"{SCADIR}/kstar.txt", [kstar], fmt="%d")
+    np.savetxt(f"{SCADIR}/eigenvalue_cutoff.txt", [cutoff])
     np.save(f"{SCADIR}/all_evals_sca.npy", evals_sca)
     np.save(f"{SCADIR}/all_evecs_sca.npy", evecs_sca)
     np.save(f"{SCADIR}/significant_evals_sca.npy", sig_evals_sca)
@@ -460,6 +477,7 @@ def main(args):
         max_attempts=5, 
         verbosity=verbosity,
     )
+    np.save(f"{SCADIR}/v_ica_normalized.npy", v_ica_normalized)
     np.save(f"{SCADIR}/w_ica.npy", w_ica)
 
     # Fit t-distribution to each IC
@@ -474,6 +492,8 @@ def main(args):
         print(f"Identified {len(all_imp_idxs_unique)} important positions (w/o repeats).")
     
     np.save(f"{SCADIR}/all_important_positions.npy", all_imp_idxs_unique)
+    with open(f"{SCADIR}/t_dists_info.json", "w") as f:
+        json.dump(t_dists_info, f)
     
     # Plot t-distributions
     plot_t_distributions(v_ica_normalized, t_dists_info, IMGDIR)
@@ -500,6 +520,7 @@ def main(args):
     group_idxs_all = np.concatenate(groups, axis=0)
     sca_mat_imp = Cij[group_idxs_all,:]
     sca_mat_imp = sca_mat_imp[:,group_idxs_all]
+    np.save(f"{SCADIR}/sca_matrix_sector_subset.npy", sca_mat_imp)
 
     # Plot SCA Matrix "Important" subset
     fig, ax = plt.subplots(1, 1)
@@ -514,6 +535,34 @@ def main(args):
     ax.set_xlabel("(Important) Position i")
     ax.set_ylabel("(Important) Position j")
     ax.set_title("SCA Matrix (Groups)")
+
+    # Add sector divisions if specified
+    if sector_color_set:
+        group_colors = np.concatenate([
+            len(g) * [colors.to_rgb(sector_color_set[i])] for i, g in enumerate(groups)
+        ], axis=0)
+        divider = make_axes_locatable(ax)
+        # Top rug
+        ax_top = divider.append_axes("top", size="2%", pad=0.0, sharex=ax)
+        ax_top.imshow(
+            group_colors[None,:,:], 
+            aspect="auto", 
+            extent=(0, len(group_colors), 0, 1)
+        )
+        ax_top.set_xticks([])
+        ax_top.set_yticks([])
+        ax_top.set_title(ax.get_title())
+        ax.set_title("")
+        # Right rug
+        ax_right = divider.append_axes("right", size="2%", pad=0.0, sharey=ax)
+        ax_right.imshow(
+            np.flip(group_colors, axis=0)[:,None,:], 
+            aspect="auto", 
+            extent=(0, 1, 0, len(group_colors))
+        )
+        ax_right.set_xticks([])        
+        ax_right.set_yticks([])
+
     plt.savefig(f"{IMGDIR}/sca_matrix_important_subset.png")
     plt.close()
 
@@ -522,6 +571,12 @@ def main(args):
     os.makedirs(subdir, exist_ok=True)
     for i in range(len(groups)):
         np.save(f"{subdir}/group_{i}_msapos.npy", groups[i])
+    # As a single file:
+    msapos_to_groupidx = np.vstack([
+        group_idxs_all,
+        np.concatenate([len(g) * [i] for i, g in enumerate(groups)], axis=0)
+    ])
+    np.save(f"{SCADIR}/msapos_to_groupidx.npy", msapos_to_groupidx)
 
     # Plot data and groups in EV coords (2-dimensional)
     EVIDXS_AND_GROUP_IDXS = [  # ((EVi, EVj), [group_indices])
@@ -850,16 +905,17 @@ def plot_sequence_similarity(
         xmsa, imgdir
 ):
     npos = xmsa.shape[1]
-    xmsa = xmsa.reshape([xmsa.shape[0], -1])
-    similarity_matrix = (xmsa @ xmsa.T) / npos
-    upper_vals = similarity_matrix[np.triu_indices_from(similarity_matrix)]
+    xmsa = xmsa.argmax(axis=-1)  # conversion
+    distances = pdist(xmsa, metric="hamming")
+    similarities = 1 - distances
+    similarity_matrix = 1 - squareform(distances)
     fig, [ax1, ax2] = plt.subplots(1, 2, figsize=(8,5))
 
-    Z = sch.linkage(similarity_matrix, method="complete", metric="cityblock")
+    Z = sch.linkage(distances, method="complete", metric="hamming")
     dendro = sch.dendrogram(Z, no_plot=True)
     idxs = dendro["leaves"]
     
-    ax1.hist(upper_vals, int(round(npos/2)))
+    ax1.hist(similarities, int(round(npos/2)))
     ax1.set_xlabel("Pairwise sequence identities")
     ax1.set_ylabel("Count")
 

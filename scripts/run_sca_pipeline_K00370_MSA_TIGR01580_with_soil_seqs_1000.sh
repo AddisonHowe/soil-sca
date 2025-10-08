@@ -20,6 +20,7 @@ kstar=0
 
 RUN_PYMOL=true
 pymol_reference="1Q16"
+haltafter=5
 
 
 # Run SCA script
@@ -36,22 +37,31 @@ runsca -msa $msafpath -o $outdir \
     --n_boot $n_boot \
     --kstar $kstar \
     --pbar \
-    --nodendro --save_all --use_jax --load_data ${outdir}/sca_results
+    --seed 124781 \
+    --save_all --use_jax --load_data ${outdir}/sca_results
 
 
 # Run pymol script
+count=0
 if [[ ${RUN_PYMOL} == "true" ]]; then
     echo "Running pymol postscript..."
     for f in ${structdir}/*.pdb; do
         s=$(basename $f)
         s=${s/.pdb/}
-        echo $s
+        if [[ "$s" == "$pymol_reference" ]]; then
+            continue
+        fi
         python scripts/pymol_sca.py \
             -s ${s} \
             -r ${pymol_reference} \
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
             --outdir ${outdir}/pymol_images \
-            --groups "-1"
+            --groups "-1" \
+            # --multisector_group_idxs 1 2 3
+        ((count++))
+        if [[ $count -eq $haltafter ]]; then
+            break
+        fi
     done
 fi
