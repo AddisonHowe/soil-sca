@@ -148,6 +148,40 @@ def get_rawseq_positions_in_groups(
     return positions
 
 
+def get_rawseq_scores_in_groups(
+        rawseq_idxs: NDArray[np.int_],
+        groups: list[NDArray[np.int_]],
+        group_scores: list[NDArray[np.float64]],
+) -> list[list[list[float]]]:
+    """Scores in raw sequences that correspond to groups.
+    
+    Args:
+        rawseq_idxs (NDArray[np.int_]): Array of shape (n, m) where n is the 
+            number of retained sequences and m is the number of retained 
+            positions in the MSA.
+        groups (list[list[int]]): Group definitions, with groups[i] listing
+            the positions in the trimmed MSA (consisting of only retained
+            sequences and positions) that are part of group i.
+        group_scores (list[NDArray[np.float64]]): Group scores, with 
+            group_scores[i] listing the scores of the positions in the trimmed 
+            MSA.
+
+    Returns:
+        list[list[list[float]]]: A nested list providing for each sequence and 
+            group, the scores (projection onto the group component V_j) of the 
+            raw sequence positions that are part of the group.
+    """
+    nseqs, npos = rawseq_idxs.shape
+    scores = [[None for _ in range(len(groups))] for _ in range(nseqs)]
+    for gidx, (group, score_vect) in enumerate(zip(groups, group_scores)):
+        group_idxs = rawseq_idxs[:, group]
+        for seqidx in range(nseqs):
+            scores[seqidx][gidx] = list(
+                [s for i, s in zip(group_idxs[seqidx], score_vect) if i >= 0]
+            )
+    return scores
+
+
 def get_group_rawseq_positions_by_entry(
         msa_obj: MultipleSeqAlignment,
         retained_sequences: NDArray[np.int_],
@@ -181,3 +215,39 @@ def get_group_rawseq_positions_by_entry(
                 np.array(group_rawseq_positions[i][groupidx])
             )
     return group_rawseq_positions_by_entry
+
+
+def get_group_rawseq_scores_by_entry(
+        msa_obj: MultipleSeqAlignment,
+        retained_sequences: NDArray[np.int_],
+        groups: list[list[int]],
+        group_rawseq_scores: list[list[list[float]]],
+) -> dict[str,list[NDArray[np.float64]]]:
+    """Get V scores
+
+    Args:
+        msa_obj (MultipleSeqAlignment): MSA object
+        retained_sequences (NDArray[np.int_]): Indices of retained sequences.
+        groups (list[list[int]]): Group definitions, with groups[i] listing
+            the positions in the trimmed MSA (consisting of only retained
+            sequences and positions) that are part of group i.
+        group_rawseq_scores (list[list[list[float]]]): A nested list providing 
+            for each sequence and group, the raw sequence scores corresponding 
+            to positions that are part of the group.
+
+    Returns:
+        dict[str,list[NDArray[np.float64]]]: Dictionary mapping entry ID to list 
+            of group scores. Each vector of group scores is an array of scores, 
+            the score corresponding to the residue position in the structure, 
+            with index starting at 0.
+    """
+    group_rawseq_scores_by_entry = {}
+    for i, seqidx in enumerate(retained_sequences):
+        entry = msa_obj[int(seqidx)]
+        id = entry.id
+        group_rawseq_scores_by_entry[id] = []
+        for groupidx in range(len(groups)):
+            group_rawseq_scores_by_entry[id].append(
+                np.array(group_rawseq_scores[i][groupidx])
+            )
+    return group_rawseq_scores_by_entry

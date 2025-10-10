@@ -27,7 +27,9 @@ from mysca.preprocess import compute_background_freqs
 from mysca.core import run_sca, run_ica
 from mysca.helpers import get_top_k_conserved_retained_positions
 from mysca.helpers import get_rawseq_positions_in_groups
+from mysca.helpers import get_rawseq_scores_in_groups
 from mysca.helpers import get_group_rawseq_positions_by_entry
+from mysca.helpers import get_group_rawseq_scores_by_entry
 from mysca.helpers import get_rawseq_indices_of_msa
 from mysca.constants import SECTOR_COLORS
 
@@ -86,6 +88,8 @@ def parse_args(args):
                             help="Value of k_start to override bootstrap estimate.")
     sca_params.add_argument("-p", "--pstar", type=int, default=95, 
                             help="Percentile defining IC groups.")
+    sca_params.add_argument("--weak_assignment", type=int, nargs="*", 
+                            default=[])
 
     return parser.parse_args(args)
 
@@ -106,6 +110,7 @@ def main(args):
     USE_JAX = args.use_jax
     SAVE_ALL = args.save_all
     sector_cmap = args.sector_cmap
+    weak_assignment = args.weak_assignment
 
     gap_truncation_thresh = args.gap_truncation_thresh
     sequence_gap_thresh = args.sequence_gap_thresh
@@ -501,20 +506,28 @@ def main(args):
     # Get groups from top p% empirical distribution
     # groups = get_groups(v_ica_normalized, p=pstar, method="t-dist")
     groups = []
+    group_scores = []
     for i, idx_set in enumerate(top_idxs):
         group = []
+        group_score = []
         for idx in idx_set:
             if np.sum(all_imp_idxs == idx) == 1:
                 # Position is uniquely assigned to a group
                 group.append(idx)
+                group_score.append(v_ica_normalized[idx,i])
             elif np.sum(all_imp_idxs == idx) > 1:
                 # Position is not uniquely assigned to a group.
                 # Assign to group only if projection onto ith IC is maximal
-                if np.all(v_ica_normalized[idx,:] >= v_ica_normalized[idx,i]):
+                screen = ~np.isin(
+                    np.arange(v_ica_normalized.shape[1]), weak_assignment
+                )
+                if np.all(v_ica_normalized[idx,screen] >= v_ica_normalized[idx,i]):
                     group.append(idx)
+                    group_score.append(v_ica_normalized[idx,i])
             else:
                 raise RuntimeError("Index should be found amoung all...")
         groups.append(np.array(group))
+        group_scores.append(np.array(group_score))
 
     # Subset the SCA matrix into grouped important positions
     group_idxs_all = np.concatenate(groups, axis=0)
@@ -566,11 +579,15 @@ def main(args):
     plt.savefig(f"{IMGDIR}/sca_matrix_important_subset.png")
     plt.close()
 
-    # Save groups in MSA coordinates
-    subdir = f"{OUTDIR}/groups"
-    os.makedirs(subdir, exist_ok=True)
+    # Save groups and group_scores in MSA coordinates
+    subdir1 = f"{OUTDIR}/groups"
+    subdir2 = f"{SCADIR}/msa_sectors"
+    os.makedirs(subdir1, exist_ok=True)
+    os.makedirs(subdir2, exist_ok=True)
     for i in range(len(groups)):
-        np.save(f"{subdir}/group_{i}_msapos.npy", groups[i])
+        np.save(f"{subdir1}/group_{i}_msapos.npy", groups[i])
+        np.save(f"{subdir2}/sector_{i}_msapos.npy", groups[i])
+        np.save(f"{subdir2}/sector_{i}_scores.npy", group_scores[i])
     # As a single file:
     msapos_to_groupidx = np.vstack([
         group_idxs_all,
@@ -643,17 +660,28 @@ def main(args):
     group_rawseq_positions = get_rawseq_positions_in_groups(
         rawseq_idxs, groups
     )
+    group_rawseq_scores = get_rawseq_scores_in_groups(
+        rawseq_idxs, groups, group_scores
+    )
     group_rawseq_positions_by_entry = get_group_rawseq_positions_by_entry(
         msa_obj_orig, retained_sequences, groups, group_rawseq_positions
     )
+    group_rawseq_scores_by_entry = get_group_rawseq_scores_by_entry(
+        msa_obj_orig, retained_sequences, groups, group_rawseq_scores
+    )
     for gidx in range(len(groups)):
-        subdir = f"{OUTDIR}/sca_groups/group_{gidx}"
-        os.makedirs(subdir, exist_ok=True)
+        subdir1 = f"{OUTDIR}/sca_groups/group_{gidx}"
+        subdir2 = f"{OUTDIR}/pdb_sectors/sector_{gidx}"
+        os.makedirs(subdir1, exist_ok=True)
+        os.makedirs(subdir2, exist_ok=True)
         for i, seqidx in enumerate(retained_sequences):
             entry = msa_obj_orig[int(seqidx)]
             id = entry.id
             group_arr = group_rawseq_positions_by_entry[id][gidx]
-            np.save(f"{subdir}/group_{gidx}_{id}.npy", group_arr)
+            group_scores_arr = group_rawseq_scores_by_entry[id][gidx]
+            np.save(f"{subdir1}/group_{gidx}_{id}.npy", group_arr)
+            np.save(f"{subdir2}/sector_{gidx}_pdbpos_{id}.npy", group_arr)
+            np.save(f"{subdir2}/sector_{gidx}_scores_{id}.npy", group_scores_arr)
     
     if verbosity:
         print("Done!")

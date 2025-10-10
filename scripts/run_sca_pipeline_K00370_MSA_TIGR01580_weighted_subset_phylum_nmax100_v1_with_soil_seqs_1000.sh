@@ -38,6 +38,7 @@ runsca -msa $msafpath -o $outdir \
     --kstar $kstar \
     --pbar \
     --seed 6857 \
+    --weak_assignment 0 \
     --save_all --load_data ${outdir}/sca_results
 
 
@@ -56,9 +57,10 @@ if [[ ${RUN_PYMOL} == "true" ]]; then
             -r ${pymol_reference} \
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
+            --scores_dir ${outdir}/pdb_sectors \
             --outdir ${outdir}/pymol_images \
             --groups -1 \
-            # --multisector_group_idxs 1 2 3
+            --show_molybdenum
         ((count++))
         if [[ $count -eq $haltafter ]]; then
             break

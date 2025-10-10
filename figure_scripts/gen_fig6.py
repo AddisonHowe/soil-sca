@@ -12,7 +12,7 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 import seaborn as sns
 import tqdm as tqdm
 
-from mysca.constants import VARIANT_GROUP_COLORS
+from mysca.constants import VARIANT_GROUP_COLORS, SECTOR_COLORS
 
 NFIGS = 1
 
@@ -20,6 +20,12 @@ variant_groups4_fpath = f"data/K00370/misc/assignments_K00370_v2.tsv"
 variant_groups8_fpath = f"data/K00370/misc/assignments_K00370_v3.tsv"
 parameter_values_g4_fpath = f"data/K00370/misc/nar_4groups.tsv"
 parameter_values_g8_fpath = f"data/K00370/misc/nar_8groups.tsv"
+
+DEFAULT_RANKS = ["kingdom", "phylum", "class"]
+
+DEFAULT_SOIL_SCATTER_SIZE = 8
+DEFAULT_SOIL_SCATTER_EDGECOLOR = "black"
+
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
@@ -29,6 +35,10 @@ def parse_args(args):
     parser.add_argument("-o", "--outdir", type=str, required=True)
     parser.add_argument("-v", "--verbosity", type=int, default=1)
     parser.add_argument("--disable_pbar", action="store_true")
+    parser.add_argument("-r", "--ranks", type=str, nargs="*", default=None)
+    parser.add_argument("-p", "--pairs", type=int, nargs="*", default=None)
+    parser.add_argument("-xl", "--xlims", type=float, nargs="*", default=None)
+    parser.add_argument("-yl", "--ylims", type=float, nargs="*", default=None)
     return parser.parse_args(args)
 
 
@@ -49,11 +59,16 @@ def main(args):
     outdir = args.outdir
     verbosity = args.verbosity
     disable_pbar = args.disable_pbar
+    ranks = args.ranks if args.ranks else DEFAULT_RANKS
+    pairs = args.pairs
+    xlims = args.xlims
+    ylims = args.ylims
 
     fmt = "pdf"
     transparent = True
 
     # Housekeeping
+    assert isinstance(ranks, list), "Arg ranks should be a list of strings"
     os.makedirs(outdir, exist_ok=True)
     pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
@@ -152,28 +167,53 @@ def main(args):
     df_nonsoil = df_full[~df_full["from_soil"]]
     df_soil = df_full[df_full["from_soil"]]
 
+    if pairs is None or pairs[0] == -1:
+        pairs = np.array([(i, i+1) for i in range(Up.shape[1] - 2)])
+    elif len(pairs) == 2:
+        pairs = np.array(pairs)[:,None]
+        assert pairs.shape == (1,2)
+    else:
+        pairs = np.array(pairs).reshape([-1, 2])
+    
+    if xlims is None:
+        xlims = np.zeros(pairs.shape, dtype=int)
+    elif len(xlims) == 2:
+        xlims = np.array(xlims)[:,None]
+        assert xlims.shape == (1,2)
+    else:
+        xlims = np.array(xlims).reshape([-1, 2])
+    
+    if ylims is None:
+        ylims = np.zeros(pairs.shape, dtype=int)
+    elif len(ylims) == 2:
+        ylims = np.array(ylims)[:,None]
+        assert ylims.shape == (1,2)
+    else:
+        ylims = np.array(ylims).reshape([-1, 2])
+
     # Generate plots
     printv("Generating plots...")
 
     saveas = "jointplot_{}{}_by_{}_ic{}v{}"
     bbox_inches = "tight"
-    RANKS = ["kingdom", "phylum", "class"]
     ARGSETS = [
         [None, None, None,],
-        ["ra_inf_g4", "cool", "$r_A$",],
-        ["ra_inf_g8", "cool", "$r_A$",],
+        ["ra_inf_g4", "cool", "$r_A^{(4)}$",],
+        ["ra_inf_g8", "cool", "$r_A^{(8)}$",],
         ["group4", ListedColormap(VARIANT_GROUP_COLORS, N=4), "variant group",],
         ["group8", ListedColormap(VARIANT_GROUP_COLORS, N=8), "variant group",],
     ]
-    PAIRS = [(i, i+1) for i in range(Up.shape[1] - 2)]
-    PAIRS += [
-        (3, 5),
-        (4, 6),
-    ]
+    FIGSIZE = (6.75, 4.5)
     if saveas:
         for sec_key, cmap, key_label in ARGSETS:
-            for rank in RANKS:
-                for i, j in PAIRS:    
+            for rank in ranks:
+                for counter, (i, j) in enumerate(pairs):
+                    xlim = xlims[counter, :]
+                    ylim = ylims[counter, :]
+                    if np.all(xlim == 0):
+                        xlim = None
+                    if np.all(ylim == 0):
+                        ylim = None
                     if f"Up{i}" not in df_full.columns or \
                             f"Up{j}" not in df_full.columns:
                         continue
@@ -184,7 +224,10 @@ def main(args):
                         saveas=saveas,
                         format=fmt,
                         transparent=transparent,
-                        bbox_inches=bbox_inches, 
+                        bbox_inches=bbox_inches,
+                        figsize=FIGSIZE, 
+                        xlim=xlim,
+                        ylim=ylim, 
                     )
     pbar.update(1)
     
@@ -198,12 +241,17 @@ def make_subplot_jointplots(
         saveas, 
         format="png",
         transparent=True,
-        bbox_inches=None, 
+        bbox_inches=None,
+        figsize=None, 
+        xlim=None,
+        ylim=None,
 ):
     if isinstance(cmap, ListedColormap):
         norm = BoundaryNorm(0.5 + np.arange(1 + len(cmap.colors)), cmap.N)
+        vmin = None
     else:
         norm = None
+        vmin = 0.2  # TODO: generalize
     include_soil = sec_key is not None
     g = scatter_by_with_margins(
         df_nonsoil, i, j, rank, 
@@ -212,6 +260,7 @@ def make_subplot_jointplots(
         size=6,
         alpha=0.8,
         legend=True,
+        height=figsize[1],
     )
     fig = g.ax_joint.get_figure()
     if include_soil:
@@ -221,7 +270,9 @@ def make_subplot_jointplots(
             alpha=1.0,
             cmap=cmap,
             norm=norm,
-            s=8,
+            vmin=vmin,
+            s=DEFAULT_SOIL_SCATTER_SIZE,
+            edgecolors=DEFAULT_SOIL_SCATTER_EDGECOLOR,
         )                
         # Position colorbar to the right of the legend
         renderer = g.ax_joint.get_figure().canvas.get_renderer()
@@ -237,12 +288,38 @@ def make_subplot_jointplots(
         cax = fig.add_axes([left, bottom, width, height])
         cbar = plt.colorbar(sc, cax=cax)
         
-        cbar.ax.set_title(key_label, fontsize=10)
+        cbar.ax.set_title(key_label, fontsize=8)
         if isinstance(cmap, ListedColormap):
             cbar.ax.set_yticks(
                 1 + np.arange(cmap.N),
                 [str(i+1) for i in range(cmap.N)]
             )
+
+    g.ax_joint.set_xlabel(
+        f"seq map of IC {i} $(\\tilde{{U}}_{i}^p$)", 
+        color="black",
+        bbox=dict(
+            facecolor=SECTOR_COLORS[i],  # highlight color
+            alpha=0.5,
+            edgecolor="none",  # no border
+            boxstyle="round,pad=0.3",  # rounded corners
+        ),
+    )
+    g.ax_joint.set_ylabel(
+        f"seq map of IC {j} $(\\tilde{{U}}_{j}^p)$", 
+        color="black",
+        bbox=dict(
+            facecolor=SECTOR_COLORS[j],  # highlight color
+            alpha=0.5,
+            edgecolor="none",  # no border
+            boxstyle="round,pad=0.3",  # rounded corners
+        ),
+    )
+
+    if xlim is not None:
+        g.ax_joint.set_xlim(*xlim)
+    if ylim is not None:
+        g.ax_joint.set_ylim(*ylim)
 
     # Save and close
     saveas = saveas.format(
@@ -269,6 +346,7 @@ def scatter_by_with_margins(
         data_key="Up{}",
         axis_label_template="seq map of IC {}",
         legend=True,
+        height=6,
 ):
     xkey = data_key.format(idx0)
     ykey = data_key.format(idx1)
@@ -295,6 +373,7 @@ def scatter_by_with_margins(
         hue_order=hue_order,
         palette=palette,
         marginal_ticks=True,
+        height=height,
     )
     g.plot_joint(
         sns.scatterplot,
@@ -319,7 +398,7 @@ def scatter_by_with_margins(
             handles=handles, labels=labels, title=color_by.title(),
             bbox_to_anchor=(1.05, 1.0), loc='upper left',
             frameon=True,
-            fontsize=8,
+            fontsize=6,
         )
         for handle in lg.legend_handles:
             handle.set_markersize(6)

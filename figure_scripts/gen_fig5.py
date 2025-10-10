@@ -86,8 +86,6 @@ def main(args):
     else:
         ylims = np.array(ylims).reshape([-1, 2])
     
-    
-    
     os.makedirs(outdir, exist_ok=True)
     pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
@@ -199,8 +197,8 @@ def main(args):
     bbox_inches = None
     layout="constrained"
     ARGSETS = [
-        ["ra_inf_g4", "cool", "$r_A$",],
-        ["ra_inf_g8", "cool", "$r_A$",],
+        ["ra_inf_g4", "cool", "$r_A^{(4)}$",],
+        ["ra_inf_g8", "cool", "$r_A^{(8)}$",],
         ["group4", ListedColormap(VARIANT_GROUP_COLORS, N=4), "variant group",],
         ["group8", ListedColormap(VARIANT_GROUP_COLORS, N=8), "variant group",],
     ]
@@ -326,71 +324,6 @@ def make_subplot_seqmap_scatterplots(
     return
 
 
-def make_subplot_jointplots(
-        df_soil, df_nonsoil, rank, i, j, sec_key, cmap, key_label, *,
-        outdir, 
-        saveas, 
-        format="png",
-        transparent=True,
-        bbox_inches=None, 
-):
-    if isinstance(cmap, ListedColormap):
-        norm = BoundaryNorm(0.5 + np.arange(1 + len(cmap.colors)), cmap.N)
-    else:
-        norm = None
-    include_soil = sec_key is not None
-    g = scatter_by_with_margins(
-        df_nonsoil, i, j, rank, 
-        k=20, 
-        palette="tab20",
-        size=6,
-        alpha=0.8,
-        legend=True,
-    )
-    fig = g.ax_joint.get_figure()
-    if include_soil:
-        sc = g.ax_joint.scatter(
-            df_soil[f"Up{i}"].values, df_soil[f"Up{j}"].values, 
-            c=df_soil[sec_key].values,
-            cmap=cmap,
-            norm=norm,
-            s=8,
-        )                
-        # Position colorbar to the right of the legend
-        renderer = g.ax_joint.get_figure().canvas.get_renderer()
-        legend = g.ax_marg_y.get_legend()
-        bbox = legend.get_window_extent(renderer=renderer)
-        bbox_fig = bbox.transformed(fig.transFigure.inverted())
-        pad = 0.05
-        width = 0.02
-        left = bbox_fig.x1 + pad
-        bottom = g.ax_joint.get_position().y0
-        height = g.ax_joint.get_position().height
-        # Add the colorbar
-        cax = fig.add_axes([left, bottom, width, height])
-        cbar = plt.colorbar(sc, cax=cax)
-        
-        cbar.ax.set_title(key_label, fontsize=10)
-        if isinstance(cmap, ListedColormap):
-            cbar.ax.set_yticks(
-                np.arange(cmap.N),
-                [str(i+1) for i in range(cmap.N)]
-            )
-
-    # Save and close
-    saveas = saveas.format(
-        "withsoil" if include_soil else "nonsoil", 
-        "_" + sec_key if include_soil else "", 
-        rank, i, j
-    )
-    plt.savefig(
-        f"{outdir}/{saveas}.{format}", format=format, 
-        transparent=transparent, bbox_inches=bbox_inches
-    )
-    plt.close()
-    return
-
-
 def scatter_by(
         df, idx0, idx1, color_by, 
         k=None, 
@@ -452,76 +385,6 @@ def scatter_by(
             handle.set_markersize(6)
 
     return ax
-
-
-def scatter_by_with_margins(
-        df, idx0, idx1, color_by, 
-        k=None, 
-        size=20, 
-        alpha=1, 
-        palette="viridis",
-        color_nan="r",
-        color_other="lightgrey",
-        data_key="Up{}",
-        axis_label_template="seq map of IC {}",
-        legend=True,
-):
-    xkey = data_key.format(idx0)
-    ykey = data_key.format(idx1)
-    xlabel = axis_label_template.format(idx0)
-    ylabel = axis_label_template.format(idx1)
-    
-    cat_counts = df[color_by].value_counts()
-    ncats = len(cat_counts)
-    if k is None or k <= 0:
-        k = ncats
-    
-    top_k = cat_counts.nlargest(k).index
-    col_group = df[color_by].where(df[color_by].isin(top_k), 'Other')
-    col_group[pd.isna(df[color_by])] = "NA"
-    palette = sns.color_palette(palette, n_colors=k)
-    palette = dict(zip(top_k, palette))
-    palette["Other"] = color_other
-    palette["NA"] = color_nan
-    hue_order = top_k.append(pd.Index(["Other", "NA"]))
-
-    g = sns.JointGrid(
-        data=df, x=xkey, y=ykey, 
-        hue=col_group,
-        hue_order=hue_order,
-        palette=palette,
-        marginal_ticks=True,
-    )
-    g.plot_joint(
-        sns.scatterplot,
-        s=size, 
-        alpha=alpha, 
-        edgecolor="none",
-        legend=legend,
-    )
-    g.plot_marginals(
-        sns.histplot,
-        multiple="stack"
-    )
-    g.ax_joint.set_xlabel(xlabel)
-    g.ax_joint.set_ylabel(ylabel)
-
-    if legend:
-        handles, labels = g.ax_joint.get_legend_handles_labels()
-        labels = [
-            l if l not in cat_counts else f"{l} ({cat_counts[l]})" for l in labels
-        ]
-        lg = g.ax_marg_y.legend(
-            handles=handles, labels=labels, title=color_by.title(),
-            bbox_to_anchor=(1.05, 1.0), loc='upper left',
-            frameon=True,
-            fontsize=8,
-        )
-        for handle in lg.legend_handles:
-            handle.set_markersize(6)
-        g.ax_joint.get_legend().remove()
-
-    return g
 
 
 def make_subplot_sca_matrix_sector_subsets(
