@@ -15,7 +15,7 @@ position_gap_thresh=0.2
 regularization=0.03
 background=None
 n_top_conserved=10
-n_boot=0
+n_boot=10
 kstar=0
 
 RUN_PYMOL=true
@@ -39,7 +39,7 @@ runsca -msa $msafpath -o $outdir \
     --pbar \
     --seed 13245 \
     --weak_assignment 0 \
-    --save_all --load_data ${outdir}/sca_results
+    --save_all #--load_data ${outdir}/sca_results
 
 
 # Run pymol script
@@ -57,6 +57,7 @@ if [[ ${RUN_PYMOL} == "true" ]]; then
             -r ${pymol_reference} \
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
+            --scores_dir ${outdir}/pdb_sectors \
             --outdir ${outdir}/pymol_images \
             --groups -1 \
             --show_molybdenum
