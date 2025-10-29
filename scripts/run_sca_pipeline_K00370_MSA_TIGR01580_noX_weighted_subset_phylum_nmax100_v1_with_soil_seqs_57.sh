@@ -15,7 +15,7 @@ position_gap_thresh=0.2
 regularization=0.03
 background=data/backgrounds/background1.json
 n_top_conserved=10
-n_boot=10
+n_boot=20
 kstar=0
 
 RUN_PYMOL=true
