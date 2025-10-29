@@ -100,7 +100,7 @@ def sample_records(id2entry, df_seqs_metadata, rank, value_counts, n_max, rng):
     for rval in value_counts.index:
         count = value_counts[rval]
         print(rval, count)
-        seqid_subset = df_seqs_metadata[df_seqs_metadata[rank] == rval]["seqid"]  
+        seqid_subset = df_seqs_metadata[df_seqs_metadata[rank] == rval]["seqid"]
         if count > n_max:
             # Sample
             idxs = rng.choice(count, n_max, replace=False)

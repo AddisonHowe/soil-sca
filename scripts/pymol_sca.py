@@ -10,9 +10,13 @@ Example usage:
 import argparse
 import os
 import sys
+import shutil
 import pymol
 from pymol import cmd
 import numpy as np
+import imageio
+from PIL import Image
+import tqdm as tqdm
 
 from mysca.constants import SECTOR_COLORS
 
@@ -32,7 +36,7 @@ def parse_args(args):
     parser.add_argument("-s", "--scaffold", type=str, required=True)
     parser.add_argument("--pdb_dir", type=str, required=True)
     parser.add_argument("--groups_dir", type=str, required=True)
-    parser.add_argument("--groups", type=int, nargs='*', default=-1,
+    parser.add_argument("--groups", type=int, nargs="*", default=-1,
                         help="Group indices, (starting at 0) that correspond " \
                         "to subdirectories group_<idx> of groups_dir. If -1, " \
                         "produce plots for all groups.")
@@ -43,6 +47,7 @@ def parse_args(args):
                         "reference.")
     parser.add_argument("--scores_dir", type=str, default=None)
     parser.add_argument("--views", action="store_true")
+    parser.add_argument("--animate", action="store_true")
     parser.add_argument("--show_molybdenum", action="store_true")
     parser.add_argument("-o", "--outdir", type=str, default=None)
     parser.add_argument("-v", "--verbosity", type=int, default=1)
@@ -62,6 +67,7 @@ def main(args):
     outdir = args.outdir
     verbosity = args.verbosity
     views = args.views
+    animate = args.animate
 
     if ref_scaffold is None or ref_scaffold.lower() == "none":
         ref_scaffold = None
@@ -153,6 +159,7 @@ def main(args):
             scores_dir=scores_dir,
             show_molybdenum=show_molybdenum,
             views=views,
+            animate=animate,
             outdir=outdir, 
             verbosity=verbosity,
         )
@@ -172,6 +179,7 @@ def plot_scaffold_by_sectors(
         scores_dir=None,
         show_molybdenum=False,
         views=True,
+        animate=False,
 ):
     gdir = f"{groups_basedir}"
     if outdir:
@@ -241,6 +249,45 @@ def plot_scaffold_by_sectors(
                 cmd.rotate("y", 90, "struct")
                 if ref_scaffold:
                     cmd.rotate("y", 90, "ref_struct")
+        
+        # Save animation
+        if animate:
+            RAY_FIRST = 1  # Better quality if 1. Faster if 0.
+            n_frames = 24  # 15 degrees per frame
+            seconds_per_frame = 0.1
+            
+            framesdir = f"{outdir}/frames/{scaffold}_group{gidx}_frames"
+            os.makedirs(framesdir, exist_ok=True)
+
+            for i in tqdm.trange(n_frames, leave=False):
+                cmd.turn("y", 360 / n_frames)
+                filename = os.path.join(framesdir, f"frame_{i:03d}.png")
+                cmd.png(
+                    filename, 
+                    # width=800, height=800, 
+                    dpi=300, ray=RAY_FIRST,
+                )
+            
+            # Combine frames into a GIF
+            frames = []
+            for i in range(n_frames):
+                path = os.path.join(framesdir, f"frame_{i:03d}.png")
+                im = Image.open(path).convert("RGBA")
+                # Flatten the transparent background to white
+                bg = Image.new("RGB", im.size, (255, 255, 255))
+                bg.paste(im, mask=im.getchannel("A"))
+                frames.append(np.array(bg))
+            
+            # Save as GIF (no alpha channel, no ghosting)
+            outfile = os.path.join(outdir, f"{scaffold}_group{gidx}.gif")
+            imageio.mimsave(
+                outfile,
+                frames,
+                duration=seconds_per_frame,  # seconds per frame
+                loop=0,  # loop forever
+                disposal=2,  # full-frame replace between frames
+            )
+            # shutil.rmtree(framesdir)
         
         # Reset
         if group_selection:

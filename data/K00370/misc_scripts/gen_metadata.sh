@@ -2,8 +2,11 @@
 
 infile=data/K00370/seqs/TIGR01580.fasta
 outfile=data/K00370/misc/metadata_TIGR01580.tsv
-
 taxids_outfile=data/K00370/misc/taxids_TIGR01580.txt
+
+# infile=data/K00370/seqs/TIGR01580_noX.fasta
+# outfile=data/K00370/misc/metadata_TIGR01580_noX.tsv
+# taxids_outfile=data/K00370/misc/taxids_TIGR01580_noX.txt
 
 awk '/^>/ {
     sub(/^>/, "");
