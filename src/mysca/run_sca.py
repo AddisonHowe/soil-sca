@@ -142,6 +142,10 @@ def main(args):
         # Mark to compute background frequency from MSA
         do_compute_background = True
         background_freq = None
+    elif isinstance(background_freq, str):
+        if verbosity:
+            print(f"Loading background frequencies: {background_freq}")
+        background_freq = load_background(background_freq)
     else:
         msg = f"Cannot handle given argument for background: {background_freq}"
         raise RuntimeError(msg)
@@ -685,6 +689,12 @@ def main(args):
     
     if verbosity:
         print("Done!")
+
+
+def load_background(fpath):
+    with open(fpath, "r") as f:
+        data = json.load(f)
+    return data
 
 
 def apply_ica(
