@@ -512,6 +512,7 @@ def main(args):
     groups = []
     group_scores = []
     for i, idx_set in enumerate(top_idxs):
+        print(f"i={i}, idx_set={idx_set}")
         group = []
         group_score = []
         for idx in idx_set:
@@ -525,9 +526,12 @@ def main(args):
                 screen = ~np.isin(
                     np.arange(v_ica_normalized.shape[1]), weak_assignment
                 )
-                if np.all(v_ica_normalized[idx,screen] >= v_ica_normalized[idx,i]):
+                msg = f"idx {idx} not uniquely assigned {np.where(all_imp_idxs == idx)} : {v_ica_normalized[idx,screen]} vs {v_ica_normalized[idx,i]}"
+                if np.all(v_ica_normalized[idx,i] >= v_ica_normalized[idx,screen]):
                     group.append(idx)
                     group_score.append(v_ica_normalized[idx,i])
+                    msg += f" Assigned to group {i}"
+                print(msg)
             else:
                 raise RuntimeError("Index should be found amoung all...")
         groups.append(np.array(group))
