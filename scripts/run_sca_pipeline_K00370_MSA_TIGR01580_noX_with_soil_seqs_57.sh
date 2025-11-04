@@ -17,6 +17,7 @@ background=data/backgrounds/background1.json
 n_top_conserved=10
 n_boot=0
 kstar=0
+pstar=95
 
 RUN_PYMOL=true
 pymol_reference="1Q16"
@@ -36,10 +37,12 @@ runsca -msa $msafpath -o $outdir \
     --n_top_conserved $n_top_conserved \
     --n_boot $n_boot \
     --kstar $kstar \
+    --pstar $pstar \
     --pbar \
     --seed 124781 \
     --weak_assignment 0 \
-    --save_all --use_jax --load_data ${outdir}/sca_results
+    --save_all --use_jax \
+    --load_data ${outdir}/sca_results
 
 
 # Run pymol script

@@ -17,6 +17,7 @@ background=None
 n_top_conserved=10
 n_boot=10
 kstar=0
+pstar=95
 
 RUN_PYMOL=false
 pymol_reference=""
@@ -36,10 +37,12 @@ runsca -msa $msafpath -o $outdir \
     --n_top_conserved $n_top_conserved \
     --n_boot $n_boot \
     --kstar $kstar \
+    --pstar $pstar \
     --pbar \
     --seed 15313 \
     --weak_assignment 0 \
-    --save_all #--load_data ${outdir}/sca_results
+    --save_all 
+    # --load_data ${outdir}/sca_results
 
 
 # Run pymol script

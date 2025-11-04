@@ -8,7 +8,7 @@ structdir="data/K00370/structures"
 outdir="out/K00370/TIGR01580_with_soil_seqs_1000"
 gap_truncation_thresh=0.4
 sequence_gap_thresh=0.2
-reference=Soil5.scaffold_339605269_c1_5
+reference=Soil11.scaffold_431547323_c1_2
 reference_similarity_thresh=0.2
 sequence_similarity_thresh=0.8
 position_gap_thresh=0.2
@@ -17,6 +17,7 @@ background=None
 n_top_conserved=10
 n_boot=0
 kstar=0
+pstar=95
 
 RUN_PYMOL=true
 pymol_reference="1Q16"
@@ -36,10 +37,12 @@ runsca -msa $msafpath -o $outdir \
     --n_top_conserved $n_top_conserved \
     --n_boot $n_boot \
     --kstar $kstar \
+    --pstar $pstar \
     --pbar \
     --seed 124781 \
     --weak_assignment 0 \
-    --save_all --use_jax --load_data ${outdir}/sca_results
+    --save_all --use_jax \
+    --load_data ${outdir}/sca_results
 
 
 # Run pymol script
@@ -60,7 +63,7 @@ if [[ ${RUN_PYMOL} == "true" ]]; then
             --scores_dir ${outdir}/pdb_sectors \
             --outdir ${outdir}/pymol_images \
             --groups -1 \
-            --show_molybdenum
+            --show_molybdenum --animate
         ((count++))
         if [[ $count -eq $haltafter ]]; then
             break
