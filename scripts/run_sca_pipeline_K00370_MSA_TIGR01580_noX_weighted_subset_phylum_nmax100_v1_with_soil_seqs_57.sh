@@ -41,7 +41,7 @@ runsca -msa $msafpath -o $outdir \
     --pbar \
     --seed 6125 \
     --weak_assignment 0 \
-    --save_all 
+    --save_all \
     --load_data ${outdir}/sca_results
 
 
