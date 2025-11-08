@@ -2,6 +2,24 @@
 
 set -e
 
+RUN_PYMOL=true
+N_BOOT=0
+LOAD_DIR=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --runpymol) RUN_PYMOL=true; shift ;;
+        --no-runpymol) RUN_PYMOL=false; shift ;;
+        -n|--n_boot) N_BOOT="$2"; shift 2 ;;
+        --load) LOAD_DIR="$2"; shift 2 ;;
+        -h|--help)
+            echo "Usage: $0 [--runpymol|--no-runpymol]"; exit 0 ;;
+        *)
+            echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+
 ###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ S1Ahalabi s1Ahalabi_1470_nosnakes
 msafpath="data/S1Ahalabi/msas/s1Ahalabi_1470_nosnakes.aln-fasta"
 structdir="data/S1Ahalabi/structures"
@@ -19,7 +37,15 @@ n_boot=20
 kstar=0
 pstar=95
 
-RUN_PYMOL=true
+if [[ "${LOAD_DIR}" == "false" ]]; then
+    PYLOAD_ARG=""
+elif [[ "${LOAD_DIR}" == "existing" ]]; then
+    PYLOAD_ARG="--load_data ${outdir}/sca_results"
+else
+    PYLOAD_ARG="--load_data ${LOAD_DIR}"
+fi
+
+RUN_PYMOL=${RUN_PYMOL}
 pymol_reference="3TGI"
 haltafter=5
 
@@ -41,12 +67,12 @@ runsca -msa $msafpath -o $outdir \
     --pbar \
     --seed 578347 \
     --save_all \
-    # --load_data ${outdir}/sca_results
+    ${PYLOAD_ARG}
 
 
 # Run pymol script
 count=0
-if [[ ${RUN_PYMOL} == "true" ]]; then
+if [[ ${run_pymol} == "true" ]]; then
     echo "Running pymol postscript..."
     for f in ${structdir}/*.pdb; do
         s=$(basename $f)

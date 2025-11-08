@@ -2,6 +2,24 @@
 
 set -e
 
+RUN_PYMOL=true
+N_BOOT=0
+LOAD_DIR=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --runpymol) RUN_PYMOL=true; shift ;;
+        --no-runpymol) RUN_PYMOL=false; shift ;;
+        -n|--n_boot) N_BOOT="$2"; shift 2 ;;
+        --load) LOAD_DIR="$2"; shift 2 ;;
+        -h|--help)
+            echo "Usage: $0 [--runpymol|--no-runpymol]"; exit 0 ;;
+        *)
+            echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+
 ###~~~~~~~~~~ SYNSEQS1
 msafpath="data/synthetic_model1/msas/synseqs1.aln-fasta"
 # structdir=""
@@ -19,7 +37,15 @@ n_boot=10
 kstar=0
 pstar=95
 
-RUN_PYMOL=false
+if [[ "${LOAD_DIR}" == "false" ]]; then
+    PYLOAD_ARG=""
+elif [[ "${LOAD_DIR}" == "existing" ]]; then
+    PYLOAD_ARG="--load_data ${outdir}/sca_results"
+else
+    PYLOAD_ARG="--load_data ${LOAD_DIR}"
+fi
+
+RUN_PYMOL=${RUN_PYMOL}
 pymol_reference=""
 haltafter=0
 
@@ -47,7 +73,7 @@ runsca -msa $msafpath -o $outdir \
 
 # Run pymol script
 # count=0
-# if [[ ${RUN_PYMOL} == "true" ]]; then
+# if [[ ${run_pymol} == "true" ]]; then
 #     echo "Running pymol postscript..."
 #     for f in ${structdir}/*.pdb; do
 #         s=$(basename $f)

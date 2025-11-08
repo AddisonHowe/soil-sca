@@ -2,6 +2,24 @@
 
 set -e
 
+RUN_PYMOL=true
+N_BOOT=0
+LOAD_DIR=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --runpymol) RUN_PYMOL=true; shift ;;
+        --no-runpymol) RUN_PYMOL=false; shift ;;
+        -n|--n_boot) N_BOOT="$2"; shift 2 ;;
+        --load) LOAD_DIR="$2"; shift 2 ;;
+        -h|--help)
+            echo "Usage: $0 [--runpymol|--no-runpymol]"; exit 0 ;;
+        *)
+            echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+
 ###~~~~~~~~~~ K00370 TIGR01580_with_soil_seqs_1000_p98
 msafpath="data/K00370/msas/MSA_TIGR01580_with_soil_seqs_1000.aln-fasta"
 structdir="data/K00370/structures"
@@ -15,11 +33,19 @@ position_gap_thresh=0.2
 regularization=0.03
 background=None
 n_top_conserved=10
-n_boot=0
+n_boot=${N_BOOT}
 kstar=0
 pstar=98
 
-RUN_PYMOL=true
+if [[ "${LOAD_DIR}" == "false" ]]; then
+    PYLOAD_ARG=""
+elif [[ "${LOAD_DIR}" == "existing" ]]; then
+    PYLOAD_ARG="--load_data ${outdir}/sca_results"
+else
+    PYLOAD_ARG="--load_data ${LOAD_DIR}"
+fi
+
+RUN_PYMOL=${RUN_PYMOL}
 pymol_reference="1Q16"
 haltafter=5
 
@@ -47,7 +73,7 @@ runsca -msa $msafpath -o $outdir \
 
 # Run pymol script
 count=0
-if [[ ${RUN_PYMOL} == "true" ]]; then
+if [[ ${run_pymol} == "true" ]]; then
     echo "Running pymol postscript..."
     for f in ${structdir}/*.pdb; do
         s=$(basename $f)
