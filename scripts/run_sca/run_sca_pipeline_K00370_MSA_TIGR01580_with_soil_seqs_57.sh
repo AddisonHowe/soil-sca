@@ -45,7 +45,7 @@ else
     PYLOAD_ARG="--load_data ${LOAD_DIR}"
 fi
 
-RUN_PYMOL=${RUN_PYMOL}
+run_pymol=${RUN_PYMOL}
 pymol_reference="1Q16"
 haltafter=5
 
