@@ -5,6 +5,12 @@ data/*/structures/*.pdb
 out/*
 jobs/*
 logs/*
+results/*/sca_results/Cijab_raw.*
+results/*/groups/
+results/*/images/
+results/*/pdb_sectors/
+results/*/pymol_images/
+results/*/sca_groups/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

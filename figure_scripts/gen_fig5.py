@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors
-import seaborn as sns
 import tqdm as tqdm
 
 from mysca.constants import VARIANT_GROUP_COLORS, SECTOR_COLORS
@@ -182,6 +181,8 @@ def main(args):
         df_variant_groups, on="seqid", how="left"
     )
 
+    df_full.to_csv(f"{outdir}/df_full.csv", sep="\t")
+
     sca_matrix_subset = np.load(f"{scadir}/sca_matrix_sector_subset.npy")
     msapos_to_groupidx = np.load(f"{scadir}/msapos_to_groupidx.npy")
     ngroups = len(np.unique(msapos_to_groupidx[1,:]))
@@ -322,69 +323,6 @@ def make_subplot_seqmap_scatterplots(
     )
     plt.close()
     return
-
-
-def scatter_by(
-        df, idx0, idx1, color_by, 
-        k=None, 
-        size=20, 
-        alpha=1, 
-        palette="viridis",
-        color_nan="r",
-        color_other="lightgrey",
-        data_key="Up{}",
-        axis_label_template="seq map of IC {}",
-        legend=True,
-        ax=None,
-):
-    xkey = data_key.format(idx0)
-    ykey = data_key.format(idx1)
-    xlabel = axis_label_template.format(idx0)
-    ylabel = axis_label_template.format(idx1)
-
-    if ax is None:
-        fig, ax = plt.subplots(1, 1)
-    
-    cat_counts = df[color_by].value_counts()
-    ncats = len(cat_counts)
-    if k is None or k <= 0:
-        k = ncats
-    
-    top_k = cat_counts.nlargest(k).index
-    col_group = df[color_by].where(df[color_by].isin(top_k), 'Other')
-    col_group[pd.isna(df[color_by])] = "NA"
-    
-    palette = sns.color_palette(palette, n_colors=k)
-    palette = dict(zip(top_k, palette))
-    palette["Other"] = color_other
-    palette["NA"] = color_nan
-    
-    sns.scatterplot(
-        data=df,
-        x=xkey,
-        y=ykey,
-        hue=col_group,
-        hue_order=top_k.append(pd.Index(["Other", "NA"])),
-        s=size, alpha=alpha, 
-        edgecolor="none",
-        palette=palette,
-        ax=ax,
-        legend=legend
-    )
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-
-    if legend:
-        handles, labels = ax.get_legend_handles_labels()
-        lg = ax.legend(
-            handles=handles, labels=labels, title=color_by.title(),
-            bbox_to_anchor=(1.05, 1), loc='upper left',
-            frameon=False,
-        )
-        for handle in lg.legend_handles:
-            handle.set_markersize(6)
-
-    return ax
 
 
 def make_subplot_sca_matrix_sector_subsets(

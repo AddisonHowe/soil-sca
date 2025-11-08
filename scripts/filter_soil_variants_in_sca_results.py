@@ -1,5 +1,11 @@
 """Filter the soil variants from the SCA results
 
+python scripts/filter_soil_variants_in_sca_results.py \
+    -d out/K00370/TIGR01580_noX_with_soil_seqs_57 \
+    -o <outdir> \
+    -sf data/K00370/misc/seqids_57.txt \
+    -si 3 5
+
 """
 
 import os, sys
@@ -72,7 +78,10 @@ def main(args):
     seqids_out = seqids_full[soil_screen]
     np.savetxt(os.path.join(outdir, "seqids.txt"), seqids_out, fmt="%s")
 
-    
+    np.save(
+        os.path.join(outdir, "soilseqs57_positions_in_msa.npy"),
+        np.where(soil_screen)[0]
+    )
 
 
 if __name__ == "__main__":

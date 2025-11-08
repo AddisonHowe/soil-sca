@@ -10,6 +10,7 @@
 * `soil_seqs_1000_with_reference.fasta`: As above, but also containing reference sequence 1Q16 acquired online.  # TODO: where?
 * `TIGR01580subset1000_with_soil_seqs_1000.fasta`: Union of `soil_seqs_1000.fasta` and the first 1000 sequences of `TIGR01580.fasta`.
 * `TIGR01580_weighted_subset_phylum_nmax100_v1.fasta`: A random subset of the `TIGR01580.fasta` file, generated with the script `data/K00370/misc_scripts/run_subset_TIGR01580_sequences.sh`. It takes at most `nmax=100` sequences from each phylum in the original file.
+* `TIGR01580_filter_ic35exc_with_soil_seqs_57.fasta`: Removed exceeders of a given threshold for $U_i^{(3)}$ and $U_i^{(5)}$. See notebook `nb_investigations/putative_sectors_35.ipynb`.
 
 ## MSAs
 

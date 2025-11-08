@@ -260,11 +260,13 @@ def main(args):
             use_jax=USE_JAX,
             verbosity=verbosity,
         )
+        Dia = sca_results["Dia"]
         Di = sca_results["Di"]
         Cij_raw = sca_results["Cij_raw"]
         Cij = sca_results["Cij_corr"]
         
         # Save SCA results
+        np.save(f"{SCADIR}/Dia.npy", Dia)
         np.save(f"{SCADIR}/conservation.npy", Di)
         np.save(f"{SCADIR}/sca_matrix.npy", Cij)
         np.save(f"{SCADIR}/phi_ia.npy", sca_results["phi_ia"])
@@ -305,9 +307,38 @@ def main(args):
     )
     ax.set_xlim(0, NUM_POS_ORIG)
     ax.set_xlabel(f"Position")
-    ax.set_ylabel("Relative Entropy (KL Divergence, $D_i$)")
-    ax.set_title(f"Position-wise Conservation")
+    ax.set_ylabel("Relative Entropy $D_i$")
+    ax.set_title(f"Conservation")
+    plt.savefig(f"{IMGDIR}/top_conservation.png")
+    plt.close()
+
+    # Plot conservation as a bar graph
+    fig, ax = plt.subplots(1, 1, figsize=(10,4))
+    ax.bar(
+        retained_positions, Di,
+        color="Blue",
+        width=1.0,
+        align="center",
+    )
+    ax.set_xlim(0, NUM_POS_ORIG)
+    ax.set_xlabel(f"Position")
+    ax.set_ylabel("Relative Entropy $D_i$")
+    ax.set_title(f"Conservation")
     plt.savefig(f"{IMGDIR}/positional_conservation.png")
+    plt.close()
+
+    # Plot conservation as a bar graph, without mapping to original positions
+    fig, ax = plt.subplots(1, 1, figsize=(10,4))
+    ax.bar(
+        np.arange(len(Di)), Di,
+        color="Blue",
+        width=1.0,
+        align="center",
+    )
+    ax.set_xlabel(f"Position")
+    ax.set_ylabel("Relative Entropy $D_i$")
+    ax.set_title(f"Conservation")
+    plt.savefig(f"{IMGDIR}/conservation.png")
     plt.close()
 
     # Eigendecomposition of SCA matrix
@@ -512,7 +543,6 @@ def main(args):
     groups = []
     group_scores = []
     for i, idx_set in enumerate(top_idxs):
-        print(f"i={i}, idx_set={idx_set}")
         group = []
         group_score = []
         for idx in idx_set:
@@ -526,12 +556,9 @@ def main(args):
                 screen = ~np.isin(
                     np.arange(v_ica_normalized.shape[1]), weak_assignment
                 )
-                msg = f"idx {idx} not uniquely assigned {np.where(all_imp_idxs == idx)} : {v_ica_normalized[idx,screen]} vs {v_ica_normalized[idx,i]}"
                 if np.all(v_ica_normalized[idx,i] >= v_ica_normalized[idx,screen]):
                     group.append(idx)
                     group_score.append(v_ica_normalized[idx,i])
-                    msg += f" Assigned to group {i}"
-                print(msg)
             else:
                 raise RuntimeError("Index should be found amoung all...")
         groups.append(np.array(group))

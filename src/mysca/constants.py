@@ -7,15 +7,15 @@ SECTOR_COLORS = [
     "#f62727",
     "#8c564b",
     "#1f77b4",
-    "#9467bd",
+    "#ff00fb",
     "#2ca02c",
-    "#7f7f7f",
+    "#60ffda",
     "#bcbd22",
-    "#393b79",
     "#c52626",
     "#17becf",
     "#ff7f0e",
-    "#637939",
+    "#DBF3AF",
+    "#393b79",
     "#8c6d31",
     "#843c39",
     "#7b4173",
@@ -52,6 +52,30 @@ VARIANT_GROUP_COLORS = [
 #     "#CC00FF",
 #     "#FF3131",
 # ]
+
+AA_COLORS = {
+    'A': '#CCFF00',  # Alanine
+    'R': '#0000FF',  # Arginine
+    'N': '#CC00FF',  # Asparagine
+    'D': '#FF0000',  # Aspartic acid
+    'C': '#FFFF00',  # Cysteine
+    'Q': '#FF00FF',  # Glutamine
+    'E': '#FF6666',  # Glutamic acid
+    'G': '#FF9900',  # Glycine
+    'H': '#66FFCC',  # Histidine
+    'I': '#00FF00',  # Isoleucine
+    'L': '#33FF33',  # Leucine
+    'K': '#3366FF',  # Lysine
+    'M': '#00CC99',  # Methionine
+    'F': '#6600CC',  # Phenylalanine
+    'P': '#FF9933',  # Proline
+    'S': '#FF66CC',  # Serine
+    'T': '#33CCFF',  # Threonine
+    'W': '#3300FF',  # Tryptophan
+    'Y': '#FF3399',  # Tyrosine
+    'V': '#66FF00',  # Valine
+    '-': '#FFFFFF',  # Gap
+}
 
 
 PASTEL_COLORS = [
