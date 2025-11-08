@@ -68,7 +68,7 @@ runsca -msa $msafpath -o $outdir \
     --seed 124781 \
     --weak_assignment 0 \
     --save_all --use_jax \
-    --load_data ${outdir}/sca_results
+    ${PYLOAD_ARG}
 
 
 # Run pymol script

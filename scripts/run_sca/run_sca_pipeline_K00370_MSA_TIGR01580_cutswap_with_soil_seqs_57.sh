@@ -65,10 +65,10 @@ runsca -msa $msafpath -o $outdir \
     --kstar $kstar \
     --pstar $pstar \
     --pbar \
-    --seed 124781 \
+    --seed 24623 \
     --weak_assignment 0 \
     --save_all --use_jax \
-    --load_data ${outdir}/sca_results
+    ${PYLOAD_ARG}
 
 
 # Run pymol script
