@@ -20,10 +20,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-###~~~~~~~~~~ K00370 TIGR01580_filter_ic35_exc_with_soil_seqs_57
-msafpath="data/K00370/msas/MSA_TIGR01580_filter_ic35_exc_with_soil_seqs_57.aln-fasta"
+###~~~~~~~~~~ K00370 TIGR01580_filter_ic35exc_with_soil_seqs_57
+msafpath="data/K00370/msas/MSA_TIGR01580_filter_ic35exc_with_soil_seqs_57.aln-fasta"
 structdir="data/K00370/structures"
-outdir="out/K00370/TIGR01580_filter_ic35_exc_with_soil_seqs_57"
+outdir="out/K00370/TIGR01580_filter_ic35exc_with_soil_seqs_57"
 gap_truncation_thresh=0.4
 sequence_gap_thresh=0.2
 reference=Soil11.scaffold_431547323_c1_2
