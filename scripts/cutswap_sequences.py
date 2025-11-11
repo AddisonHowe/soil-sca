@@ -18,7 +18,8 @@ def parse_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--msa_fpath", type=str, required=True)
     parser.add_argument("-r", "--scadir", type=str, required=True)
-    parser.add_argument("-o", "--outfpath", type=str, required=True)
+    parser.add_argument("-o", "--outdir", type=str, required=True)
+    parser.add_argument("-n", "--outfname", type=str, required=True)
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=-1)
     parser.add_argument("--percentile", type=float, default=None)
@@ -28,10 +29,13 @@ def parse_args(args):
 def main(args):
     msa_fpath = args.msa_fpath
     scadir = args.scadir
-    outfpath = args.outfpath
+    outdir = args.outdir
+    outfname = args.outfname
     start = args.start
     end = args.end
     percentile = args.percentile
+
+    outfpath = os.path.join(outdir, outfname)
 
     msa = AlignIO.read(msa_fpath, "fasta")
     nseq = len(msa)
@@ -67,6 +71,7 @@ def main(args):
     split_idx_msa_orig = retained_positions[split_idx]
     print(f"Split index {split_idx} -> index {split_idx_msa_orig} in original MSA")
     records = []
+    new_orders = {}
     for i, entry in enumerate(msa):
         seq = str(entry.seq)
         seq0 = seq[0:split_idx_msa_orig].replace("-", "")
@@ -79,10 +84,13 @@ def main(args):
             description=entry.description,
         )
         records.append(new_entry)
-
+        new_orders[entry.id] = np.concatenate([
+            split_idx + np.arange(len(seq1)), np.arange(len(seq0))
+        ])
 
     print(f"Writing results to {outfpath}")
     SeqIO.write(records, outfpath, "fasta")
+    np.savez(f"{outdir}/cutswap_seqidxs", **new_orders)
     print("Done!")
 
 
