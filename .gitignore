@@ -9,7 +9,8 @@ results/*/sca_results/Cijab_raw.*
 results/*/groups/
 results/*/images/
 results/*/pdb_sectors/
-results/*/pymol_images/
+results/*/pymol_images/frames/
+results/*/pymol_images/**.gif
 results/*/sca_groups/
 
 # Byte-compiled / optimized / DLL files
