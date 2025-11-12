@@ -7,7 +7,6 @@ jobs/*
 logs/*
 results/*/sca_results/Cijab_raw.*
 results/*/groups/
-results/*/images/
 results/*/pdb_sectors/
 results/*/pymol_images/frames/
 results/*/pymol_images/**.gif
