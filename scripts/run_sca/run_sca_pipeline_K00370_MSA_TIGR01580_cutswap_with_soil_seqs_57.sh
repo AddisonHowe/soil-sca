@@ -5,11 +5,14 @@ set -e
 RUN_PYMOL=true
 N_BOOT=0
 LOAD_DIR=false
+USE_JAX=true
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --runpymol) RUN_PYMOL=true; shift ;;
         --no-runpymol) RUN_PYMOL=false; shift ;;
+        --jax) USE_JAX=true; shift ;;
+        --no-jax) USE_JAX=false; shift ;;
         -n|--n_boot) N_BOOT="$2"; shift 2 ;;
         --load) LOAD_DIR="$2"; shift 2 ;;
         -h|--help)
@@ -45,6 +48,12 @@ else
     PYLOAD_ARG="--load_data ${LOAD_DIR}"
 fi
 
+if [[ "${USE_JAX}" == "false" ]]; then
+    JAX_ARG=""
+else
+    JAX_ARG="--use_jax"
+fi
+
 run_pymol=${RUN_PYMOL}
 pymol_reference="1Q16"
 haltafter=5
@@ -67,8 +76,8 @@ runsca -msa $msafpath -o $outdir \
     --pbar \
     --seed 24623 \
     --weak_assignment 0 \
-    --save_all --use_jax \
-    ${PYLOAD_ARG}
+    --save_all \
+    ${PYLOAD_ARG} ${JAX_ARG}
 
 
 # Run pymol script
