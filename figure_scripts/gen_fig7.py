@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import tqdm as tqdm
 import json

@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 import tqdm as tqdm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors

@@ -6,6 +6,7 @@ import os, sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 import tqdm as tqdm
 
 import scipy

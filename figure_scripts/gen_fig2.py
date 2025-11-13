@@ -6,6 +6,7 @@ import os, sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 import tqdm as tqdm
 
 NFIGS = 4
@@ -73,8 +74,21 @@ def main(args):
         )
     pbar.update(1)
 
+    saveas = "conservation"
+    bbox_inches = "tight"
+    if saveas:
+        make_subplot_conservation_barplot(
+            retained_positions, Di, 
+            outdir=outdir,
+            saveas=saveas,
+            format=fmt,
+            transparent=transparent,
+            bbox_inches=bbox_inches, 
+            figsize=(3, 2.16)
+    )
+
     saveas = "sca_matrix"
-    bbox_inches = None
+    bbox_inches = "tight"
     if saveas:
         make_subplot_sca_matrix(
             Cij, 
@@ -82,7 +96,8 @@ def main(args):
             saveas=saveas,
             format=fmt,
             transparent=transparent,
-            bbox_inches=bbox_inches, 
+            bbox_inches=bbox_inches,
+            figsize=(2.53, 2.16) 
         )
     pbar.update(1)
 
@@ -100,7 +115,7 @@ def main(args):
     pbar.update(1)
 
     saveas = "sca_matrix_spectrum_vs_null"
-    bbox_inches = None
+    bbox_inches = "tight"
     if saveas:
         make_subplot_sca_matrix_spectrum_vs_null(
             evals_sca, evals_shuff, eigenvalue_cutoff, 
@@ -109,6 +124,7 @@ def main(args):
             format=fmt,
             transparent=transparent,
             bbox_inches=bbox_inches, 
+            figsize=(3, 2.38)
         )
     pbar.update(1)
     
@@ -151,6 +167,35 @@ def make_subplot_positional_conservation(
     return
 
 
+def make_subplot_conservation_barplot(
+        retained_positions, Di, *,
+        outdir, 
+        saveas, 
+        format="png",
+        transparent=True,
+        bbox_inches=None, **kwargs
+):
+    fig, ax = plt.subplots(1, 1, figsize=kwargs.get("figsize", (10,4)))
+    ax.bar(
+        np.arange(len(Di)), Di,
+        color="Blue",
+        width=1.0,
+        align="center",
+    )
+    # ax.set_xlim(0, num_pos_orig)
+    ax.set_xlabel(f"Position")
+    ax.set_ylabel("Relative Entropy $D_i$")
+    ax.set_title(f"Positional conservation")
+    
+    # Save and close
+    plt.savefig(
+        f"{outdir}/{saveas}.{format}", format=format, 
+        transparent=transparent, bbox_inches=bbox_inches
+    )
+    plt.close()
+    return
+
+
 def make_subplot_sca_matrix(
         Cij, *,
         outdir, 
@@ -158,8 +203,9 @@ def make_subplot_sca_matrix(
         format="png",
         transparent=True,
         bbox_inches=None, 
+        **kwargs
 ):
-    fig, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1, figsize=kwargs.get("figsize", None))
     sc = ax.imshow(
         Cij, 
         cmap="Blues", 
@@ -168,9 +214,9 @@ def make_subplot_sca_matrix(
         vmax=None,
     )
     fig.colorbar(sc, label="Covariation")
-    ax.set_xlabel("(Retained) Position i")
-    ax.set_ylabel("(Retained) Position j")
-    ax.set_title("SCA Matrix")
+    ax.set_xlabel("Position $i$")
+    ax.set_ylabel("Position $j$")
+    ax.set_title("SCA Matrix $\\tilde{{C}}_{{ij}}$")
 
     # Save and close
     plt.savefig(
@@ -221,11 +267,13 @@ def make_subplot_sca_matrix_spectrum_vs_null(
         format="png",
         transparent=True,
         bbox_inches=None, 
+        **kwargs
 ):
-    fig, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1, figsize=kwargs.get("figsize", None))
     # Histogram of data eigenvalues
     counts, bins, patches = ax.hist(
-        evals_sca, bins=100, color="black", alpha=0.8, log=True, label="Data"
+        evals_sca, bins=100, color="black", alpha=0.8, 
+        log=True, label="Data"
     )
     bin_centers = 0.5 * (bins[1:] + bins[:-1])
     h, bin_edges = np.histogram(evals_shuff.flatten(), bins=bins)
@@ -239,7 +287,7 @@ def make_subplot_sca_matrix_spectrum_vs_null(
     ax.legend()
     ax.set_xlabel(f"$\\lambda$")
     ax.set_ylabel(f"Count")
-    ax.set_title(f"Spectral decomposition")
+    ax.set_title(f"$\\tilde{{C}}_{{ij}}$ spectrum")
     
     # Save and close
     plt.savefig(

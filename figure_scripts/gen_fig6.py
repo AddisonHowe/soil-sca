@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 from matplotlib.colors import ListedColormap, BoundaryNorm
 import seaborn as sns
 import tqdm as tqdm
@@ -170,7 +171,7 @@ def main(args):
     if pairs is None or pairs[0] == -1:
         pairs = np.array([(i, i+1) for i in range(Up.shape[1] - 2)])
     elif len(pairs) == 2:
-        pairs = np.array(pairs)[:,None]
+        pairs = np.array(pairs)[None,:]
         assert pairs.shape == (1,2)
     else:
         pairs = np.array(pairs).reshape([-1, 2])
@@ -178,7 +179,7 @@ def main(args):
     if xlims is None:
         xlims = np.zeros(pairs.shape, dtype=int)
     elif len(xlims) == 2:
-        xlims = np.array(xlims)[:,None]
+        xlims = np.array(xlims)[None,:]
         assert xlims.shape == (1,2)
     else:
         xlims = np.array(xlims).reshape([-1, 2])
@@ -186,7 +187,7 @@ def main(args):
     if ylims is None:
         ylims = np.zeros(pairs.shape, dtype=int)
     elif len(ylims) == 2:
-        ylims = np.array(ylims)[:,None]
+        ylims = np.array(ylims)[None,:]
         assert ylims.shape == (1,2)
     else:
         ylims = np.array(ylims).reshape([-1, 2])
@@ -198,12 +199,12 @@ def main(args):
     bbox_inches = "tight"
     ARGSETS = [
         [None, None, None,],
-        ["ra_inf_g4", "cool", "$r_A^{(4)}$",],
-        ["ra_inf_g8", "cool", "$r_A^{(8)}$",],
+        # ["ra_inf_g4", "cool", "$r_A^{(4)}$",],
+        # ["ra_inf_g8", "cool", "$r_A^{(8)}$",],
         ["group4", ListedColormap(VARIANT_GROUP_COLORS, N=4), "variant group",],
-        ["group8", ListedColormap(VARIANT_GROUP_COLORS, N=8), "variant group",],
+        # ["group8", ListedColormap(VARIANT_GROUP_COLORS, N=8), "variant group",],
     ]
-    FIGSIZE = (6.75, 4.5)
+    FIGSIZE = (5, 4)
     if saveas:
         for sec_key, cmap, key_label in ARGSETS:
             for rank in ranks:
@@ -228,6 +229,7 @@ def main(args):
                         figsize=FIGSIZE, 
                         xlim=xlim,
                         ylim=ylim, 
+                        legend=False,
                     )
     pbar.update(1)
     
@@ -245,7 +247,9 @@ def make_subplot_jointplots(
         figsize=None, 
         xlim=None,
         ylim=None,
+        **kwargs
 ):
+    include_legend = kwargs.get("legend", True)
     if isinstance(cmap, ListedColormap):
         norm = BoundaryNorm(0.5 + np.arange(1 + len(cmap.colors)), cmap.N)
         vmin = None
@@ -259,7 +263,7 @@ def make_subplot_jointplots(
         palette="tab20",
         size=6,
         alpha=0.8,
-        legend=True,
+        legend=include_legend,
         height=figsize[1],
     )
     fig = g.ax_joint.get_figure()
@@ -275,28 +279,29 @@ def make_subplot_jointplots(
             edgecolors=DEFAULT_SOIL_SCATTER_EDGECOLOR,
         )                
         # Position colorbar to the right of the legend
-        renderer = g.ax_joint.get_figure().canvas.get_renderer()
-        legend = g.ax_marg_y.get_legend()
-        bbox = legend.get_window_extent(renderer=renderer)
-        bbox_fig = bbox.transformed(fig.transFigure.inverted())
-        pad = 0.05
-        width = 0.02
-        left = bbox_fig.x1 + pad
-        bottom = g.ax_joint.get_position().y0
-        height = g.ax_joint.get_position().height
-        # Add the colorbar
-        cax = fig.add_axes([left, bottom, width, height])
-        cbar = plt.colorbar(sc, cax=cax)
+        if include_legend:
+            renderer = g.ax_joint.get_figure().canvas.get_renderer()
+            legend = g.ax_marg_y.get_legend()
+            bbox = legend.get_window_extent(renderer=renderer)
+            bbox_fig = bbox.transformed(fig.transFigure.inverted())
+            pad = 0.05
+            width = 0.02
+            left = bbox_fig.x1 + pad
+            bottom = g.ax_joint.get_position().y0
+            height = g.ax_joint.get_position().height
+            # Add the colorbar
+            cax = fig.add_axes([left, bottom, width, height])
+            cbar = plt.colorbar(sc, cax=cax)
         
-        cbar.ax.set_title(key_label, fontsize=8)
-        if isinstance(cmap, ListedColormap):
-            cbar.ax.set_yticks(
-                1 + np.arange(cmap.N),
-                [str(i+1) for i in range(cmap.N)]
-            )
+            cbar.ax.set_title(key_label, fontsize=8)
+            if isinstance(cmap, ListedColormap):
+                cbar.ax.set_yticks(
+                    1 + np.arange(cmap.N),
+                    [str(i+1) for i in range(cmap.N)]
+                )
 
     g.ax_joint.set_xlabel(
-        f"seq map of IC {i} $(\\tilde{{U}}_{i}^p$)", 
+        f"seq score IC {i} $(\\tilde{{U}}_{i}^p$)", 
         color="black",
         bbox=dict(
             facecolor=SECTOR_COLORS[i],  # highlight color
@@ -306,7 +311,7 @@ def make_subplot_jointplots(
         ),
     )
     g.ax_joint.set_ylabel(
-        f"seq map of IC {j} $(\\tilde{{U}}_{j}^p)$", 
+        f"seq score IC {j} $(\\tilde{{U}}_{j}^p)$", 
         color="black",
         bbox=dict(
             facecolor=SECTOR_COLORS[j],  # highlight color
@@ -344,7 +349,7 @@ def scatter_by_with_margins(
         color_nan="r",
         color_other="lightgrey",
         data_key="Up{}",
-        axis_label_template="seq map of IC {}",
+        axis_label_template="seq score IC {}",
         legend=True,
         height=6,
 ):

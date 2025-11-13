@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import scipy
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors
@@ -64,15 +65,15 @@ def main(args):
     if pairs is None:
         pairs = np.array([(i, i+1) for i in range(Up.shape[1] - 2)])
     elif len(pairs) == 2:
-        pairs = np.array(pairs)[:,None]
-        assert pairs.shape == (1,2)
+        pairs = np.array(pairs)[None,:]
+        assert pairs.shape == (1,2), f"{pairs.shape}"
     else:
         pairs = np.array(pairs).reshape([-1, 2])
     
     if xlims is None:
         xlims = np.zeros(pairs.shape, dtype=int)
     elif len(xlims) == 2:
-        xlims = np.array(xlims)[:,None]
+        xlims = np.array(xlims)[None,:]
         assert xlims.shape == (1,2)
     else:
         xlims = np.array(xlims).reshape([-1, 2])
@@ -80,7 +81,7 @@ def main(args):
     if ylims is None:
         ylims = np.zeros(pairs.shape, dtype=int)
     elif len(ylims) == 2:
-        ylims = np.array(ylims)[:,None]
+        ylims = np.array(ylims)[None,:]
         assert ylims.shape == (1,2)
     else:
         ylims = np.array(ylims).reshape([-1, 2])
@@ -91,12 +92,12 @@ def main(args):
 
 
     # Load data
-    msa = np.load(f"{scadir}/msa.npy")
-    sca_matrix = np.load(f"{scadir}/sca_matrix.npy")
-    retained_sequences = np.load(f"{scadir}/retained_sequences.npy")
-    retained_positions = np.load(f"{scadir}/retained_positions.npy")
+    # msa = np.load(f"{scadir}/msa.npy")
+    # sca_matrix = np.load(f"{scadir}/sca_matrix.npy")
+    # retained_sequences = np.load(f"{scadir}/retained_sequences.npy")
+    # retained_positions = np.load(f"{scadir}/retained_positions.npy")
     retained_sequence_ids = np.load(f"{scadir}/retained_sequence_ids.npy")
-    sequence_weights = np.load(f"{scadir}/sequence_weights.npy")
+    # sequence_weights = np.load(f"{scadir}/sequence_weights.npy")
     fia = np.load(f"{scadir}/fia.npy")
     phi_ia = np.load(f"{scadir}/phi_ia.npy")
     Xmsa = scipy.sparse.load_npz(f"{scadir}/Xsp.npz").toarray()
@@ -198,10 +199,10 @@ def main(args):
     bbox_inches = None
     layout="constrained"
     ARGSETS = [
-        ["ra_inf_g4", "cool", "$r_A^{(4)}$",],
-        ["ra_inf_g8", "cool", "$r_A^{(8)}$",],
+        # ["ra_inf_g4", "cool", "$r_A^{(4)}$",],
+        # ["ra_inf_g8", "cool", "$r_A^{(8)}$",],
         ["group4", ListedColormap(VARIANT_GROUP_COLORS, N=4), "variant group",],
-        ["group8", ListedColormap(VARIANT_GROUP_COLORS, N=8), "variant group",],
+        # ["group8", ListedColormap(VARIANT_GROUP_COLORS, N=8), "variant group",],
     ]
     FIGSIZE = (6.75, 4.5)
     if saveas:
@@ -290,7 +291,7 @@ def make_subplot_seqmap_scatterplots(
         )
 
     ax.set_xlabel(
-        f"seq map of IC {i} $(\\tilde{{U}}_{i}^p$)", 
+        f"seq score of IC {i} $(\\tilde{{U}}_{i}^p$)", 
         color="black",
         bbox=dict(
             facecolor=SECTOR_COLORS[i],  # highlight color
@@ -300,7 +301,7 @@ def make_subplot_seqmap_scatterplots(
         ),
     )
     ax.set_ylabel(
-        f"seq map of IC {j} $(\\tilde{{U}}_{j}^p)$", 
+        f"seq score of IC {j} $(\\tilde{{U}}_{j}^p)$", 
         color="black",
         bbox=dict(
             facecolor=SECTOR_COLORS[j],  # highlight color
@@ -309,7 +310,7 @@ def make_subplot_seqmap_scatterplots(
             boxstyle="round,pad=0.3",  # rounded corners
         ),
     )
-    ax.set_title(f"Sequence divergences")   
+    ax.set_title(f"")   
 
     if xlim is not None:
         ax.set_xlim(*xlim)

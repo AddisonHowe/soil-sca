@@ -6,6 +6,7 @@ import os, sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use("figure_scripts/styles/fig.mplstyle")
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import colors
 import tqdm as tqdm
@@ -92,11 +93,55 @@ def main(args):
             format=fmt,
             transparent=transparent,
             bbox_inches=bbox_inches, 
+            figsize=(3, 2.38),
         )
     pbar.update(1)
 
-    saveas = "{}{}{}_groups_{}"
+    saveas = "ic_loadings_{}"
     bbox_inches = "tight"
+    sector_color_set = SECTOR_COLORS
+    make_subplot_ic_loadings(
+        V_ica_normalized, None, sector_color_set, 
+        outdir=outdir,
+        saveas=saveas,
+        format=fmt,
+        transparent=transparent,
+        bbox_inches=bbox_inches, 
+        figsize=(3.2, 1.3),
+        layout="constrained",
+        legend="right",
+    )
+
+    saveas = "ic_loadings_{}"
+    bbox_inches = None
+    ICIDXS = [
+        (9, 10, 11),
+        (0, 1, 2),
+        (3, 4, 6),
+        (3, 4, 5),
+        (6, 7, 8),
+    ] + [[(i)] for i in range(V_ica_normalized.shape[1])]
+    if saveas:
+        for i, icidxs in enumerate(ICIDXS):
+            make_subplot_ic_loadings(
+                V_ica_normalized, icidxs, sector_color_set, 
+                outdir=outdir,
+                saveas=saveas,
+                format=fmt,
+                transparent=transparent,
+                bbox_inches=bbox_inches, 
+                figsize=(3.2, 1.3),
+                layout="constrained",
+                legend=False,
+                no_xticks=False,
+                no_yticks=True,
+                width=2,
+                alpha=0.9
+            )
+    pbar.update(1)
+
+    saveas = "{}{}{}_groups_{}"
+    bbox_inches = None
     ICIDXS_AND_GROUP_IDXS = [  # ((ICi, ICj), [group_indices])
         ((0, 1), [0, 1, 2]),
         ((1, 2), [0, 1, 2]),
@@ -119,8 +164,11 @@ def main(args):
     bbox_inches = "tight"
     ICIDXS_AND_GROUP_IDXS = [  # ((ICi, ICj, ICk), [group_indices])
         ((0, 1, 2), [0, 1, 2]),
+        ((3, 4, 5), [3, 4, 5]),
+        ((3, 4, 6), [3, 4, 6]),
         ((1, 2, 3), [1, 2, 3]),
         ((4, 5, 6), [4, 5, 6]),
+        ((1, 3, 6), [1, 3, 6]),
     ]
     if saveas:
         for icidxs, group_idxs in ICIDXS_AND_GROUP_IDXS:
@@ -131,7 +179,11 @@ def main(args):
                 saveas=saveas,
                 format=fmt,
                 transparent=transparent,
-                bbox_inches=bbox_inches, 
+                bbox_inches=bbox_inches,
+                annotate_origin=True, 
+                figsize=(2.7, 1.8),
+                size_background=1,
+                size=10,
             )
     pbar.update(1)
     
@@ -191,8 +243,9 @@ def make_subplot_sca_matrix_sector_subsets(
         format="png",
         transparent=True,
         bbox_inches=None, 
+        **kwargs,
 ):
-    fig, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1, figsize=kwargs.get("figsize", None))
     sc = ax.imshow(
         sca_matrix_subset, 
         cmap="Blues", 
@@ -201,9 +254,9 @@ def make_subplot_sca_matrix_sector_subsets(
         vmax=None,
     )
     fig.colorbar(sc, label="Covariation")
-    ax.set_xlabel("(Important) Position i")
-    ax.set_ylabel("(Important) Position j")
-    ax.set_title("SCA Matrix (Groups)")
+    ax.set_xlabel("Position $i$")
+    ax.set_ylabel("Position $j$")
+    ax.set_title("Modes of covariation")
 
     if sector_color_set:
         group_colors = np.concatenate([
@@ -309,7 +362,16 @@ def plot_data_3d(
         format="png",
         transparent=True,
         bbox_inches=None, 
+        **kwargs
 ):
+    annotate_origin = kwargs.get("annotate_origin", False)
+    annotate_origin = kwargs.get("annotate_origin", False)
+    figsize = kwargs.get("figsize", (12, 5))
+    elev = kwargs.get("elev", 30)
+    azim = kwargs.get("azim", 40)
+    size_background = kwargs.get("size_background", None)
+    size = kwargs.get("size", None)
+    
     ic_or_ev = ic_or_ev.lower()
     if ic_or_ev.lower() == "ic":
         title = f"ICA and identified groups"
@@ -322,7 +384,7 @@ def plot_data_3d(
     axi, axj, axk = axidxs
     if axk >= data.shape[1]:
         return
-    fig = plt.figure(figsize=(12,5))
+    fig = plt.figure(figsize=figsize)
     ax = fig.add_subplot(111, projection='3d')
     # ax.axis("equal")
     sc = ax.scatter(
@@ -330,6 +392,7 @@ def plot_data_3d(
         c="k", 
         alpha=0.2, 
         edgecolor='k',
+        s=size_background,
     )
     for i, gidx in enumerate(group_idxs):
         if gidx >= len(groups):
@@ -345,18 +408,23 @@ def plot_data_3d(
             color=group_color,
             edgecolor='k',
             label=f"group {gidx}",
+            s=size,
         )
-    ax.plot(0, 0, "ro")
-    rx, ry, rz = ax.get_xlim()[1], ax.get_ylim()[1], ax.get_zlim()[1]
-    ax.plot([0, rx], [0, 0], [0, 0], "k-", alpha=0.5)
-    ax.plot([0, 0], [0, ry], [0, 0], "k-", alpha=0.5)
-    ax.plot([0, 0], [0, 0], [0, rz], "k-", alpha=0.5)
-    ax.view_init(elev=30, azim=40)   # elev ~ tilt, azim ~ around z
+    if annotate_origin:
+        ax.plot(0, 0, "ro")
+        rx, ry, rz = ax.get_xlim()[1], ax.get_ylim()[1], ax.get_zlim()[1]
+        ax.plot([0, rx], [0, 0], [0, 0], "k-", alpha=0.5)
+        ax.plot([0, 0], [0, ry], [0, 0], "k-", alpha=0.5)
+        ax.plot([0, 0], [0, 0], [0, rz], "k-", alpha=0.5)
+    ax.view_init(elev=elev, azim=azim)   # elev ~ tilt, azim ~ around z
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.set_xlabel(f"{ic_or_ev.upper()} {axi}")
-    ax.set_ylabel(f"{ic_or_ev.upper()} {axj}")
-    ax.set_zlabel(f"{ic_or_ev.upper()} {axk}")
-    ax.set_title(title)
+    # ax.set_xlabel(f"{ic_or_ev.upper()} {axi}")
+    # ax.set_ylabel(f"{ic_or_ev.upper()} {axj}")
+    # ax.set_zlabel(f"{ic_or_ev.upper()} {axk}")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_zticks([])
+    # ax.set_title(title)
     groupstr = "".join([str(i) for i in group_idxs])
     
     # Save and close
@@ -368,6 +436,57 @@ def plot_data_3d(
     plt.close()
     return
 
+
+def make_subplot_ic_loadings(
+        V_ica_normalized, ics, sector_color_set=None, *, 
+        outdir, 
+        saveas, 
+        format="png",
+        transparent=True,
+        bbox_inches=None, 
+        **kwargs,
+):
+    include_legend = kwargs.get("legend", False)
+    no_xticks = kwargs.get("no_xticks", False)
+    no_yticks = kwargs.get("no_yticks", False)
+    width = kwargs.get("width", 1)
+    alpha = kwargs.get("alpha", 1)
+    fig, ax = plt.subplots(
+        1, 1, figsize=kwargs.get("figsize", None),
+        layout=kwargs.get("layout", None)
+    )
+    if ics is None:
+        ics = np.arange(V_ica_normalized.shape[1])
+        ic_str = "all"
+    else:
+        ic_str = ",".join([str(j) for j in ics])
+    for i in ics:
+        ax.bar(
+            np.arange(V_ica_normalized.shape[0]), 
+            np.square(V_ica_normalized[:,i]),
+            color=colors.to_rgb(sector_color_set[i]),
+            width=width, alpha=alpha,
+            align="center",
+            label=f"group {i}"
+        )
+    # ax.set_xlabel("Position $i$")
+    # ax.set_ylabel("IC loading")
+    if no_xticks:
+        ax.set_xticks([])
+    if no_yticks:
+        ax.set_yticks([])
+    if include_legend is True:
+        ax.legend(fontsize=7)
+    elif include_legend == "right":
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    
+    # Save and close
+    saveas = saveas.format(ic_str)
+    plt.savefig(
+        f"{outdir}/{saveas}.{format}", format=format, 
+        transparent=transparent, bbox_inches=bbox_inches
+    )
+    plt.close()
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
