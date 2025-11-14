@@ -23,10 +23,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ S1Ahalabi s1Ahalabi_1470_nosnakes_noX
-msafpath="data/S1Ahalabi/msas/s1Ahalabi_1470_nosnakes_noX.aln-fasta"
+###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ S1Ahalabi S1Ahalabi_1470_nosnakes
+msafpath="data/S1Ahalabi/msas/MSA_S1Ahalabi_1470_nosnakes.aln-fasta"
 structdir="data/S1Ahalabi/structures"
-outdir="out/S1Ahalabi/s1Ahalabi_1470_nosnakes_noX"
+outdir="out/S1Ahalabi/S1Ahalabi_1470_nosnakes"
 gap_truncation_thresh=0.4
 sequence_gap_thresh=0.2
 reference="gi|4139558|pdb|3TGI|E__vertebrate|warm|Rattus"
@@ -34,7 +34,7 @@ reference_similarity_thresh=0.2
 sequence_similarity_thresh=0.8
 position_gap_thresh=0.2
 regularization=0.03
-background=data/backgrounds/background1.json
+background=None
 n_top_conserved=5
 n_boot=${N_BOOT}
 kstar=0
@@ -94,9 +94,10 @@ if [[ ${run_pymol} == "true" ]]; then
             -r ${pymol_reference} \
             --pdb_dir ${structdir} \
             --groups_dir ${outdir}/sca_groups \
+            --scores_dir ${outdir}/pdb_sectors \
             --outdir ${outdir}/pymol_images \
             --groups -1 \
-            # --multisector_group_idxs 1 2 3
+            --animate
         ((count++))
         if [[ $count -eq $haltafter ]]; then
             break
