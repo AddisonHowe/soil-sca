@@ -123,6 +123,8 @@ def main(args):
     ] + [[(i)] for i in range(V_ica_normalized.shape[1])]
     if saveas:
         for i, icidxs in enumerate(ICIDXS):
+            if not np.all(np.isin(icidxs, np.arange(V_ica_normalized.shape[1]))):
+                continue
             make_subplot_ic_loadings(
                 V_ica_normalized, icidxs, sector_color_set, 
                 outdir=outdir,

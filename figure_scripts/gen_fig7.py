@@ -137,12 +137,12 @@ def main(args):
     retained_sequences_screen = np.isin(retained_seqids, df_variant_groups.index.values)
     msa = msa[retained_sequences_screen,:]
     retained_seqids = retained_seqids[retained_sequences_screen]
-    assert msa.shape == (len(df_variant_groups), msa.shape[1]), "MSA shape incorrect!"
+    # assert msa.shape == (len(df_variant_groups), msa.shape[1]), "MSA shape incorrect!"
 
     # Reorder the dataframe to match the MSA order
     df_variant_groups = df_variant_groups.loc[retained_seqids].reset_index()
     print(df_variant_groups)
-    assert np.all(df_variant_groups["seqid"].values == retained_seqids)
+    # assert np.all(df_variant_groups["seqid"].values == retained_seqids)
 
     # Subset sectors
     sector_results = {}

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-RUN=(1 2 3 4 5 5b 5pymol 6 6b 6pymol 7)
+# RUN=(1 2 3 4 5 5b 5pymol 6 6b 6pymol 7)
+RUN=(6 6b 6pymol 7)
 # RUN=(5 5b 6 6b)
 # RUN=(5all 6all)
 # RUN=(5pymol 6pymol)
@@ -14,11 +15,11 @@ should_run() {
     return 1
 }
 
-datdirbase=out/K00370/TIGR01580_with_soil_seqs_1000
-outdirbase=out/figures/TIGR01580_with_soil_seqs_1000
+datdirbase=out/K00370/TIGR01580_noX_weighted_subset_phylum_nmax100_v1_with_soil_seqs_57
+outdirbase=out/figures/TIGR01580_noX_weighted_subset_phylum_nmax100_v1_with_soil_seqs_57
 datdir=${datdirbase}/sca_results
 
-seq_metadata_fpath=data/K00370/misc/metadata_TIGR01580.tsv
+seq_metadata_fpath=data/K00370/misc/metadata_TIGR01580_noX.tsv
 taxa_metadata_fpath=data/K00370/misc/taxids_TIGR01580_metadata.tsv
 
 groups_dir=${datdirbase}/sca_groups
@@ -65,7 +66,7 @@ if should_run 5; then
         -d ${datdir} \
         -sm ${seq_metadata_fpath} \
         -tm ${taxa_metadata_fpath} \
-        --pairs 1 2  3 5 \
+        --pairs 1 2  3 4 \
         -xl     0 0  0 0 \
         -yl     0 0  0 0 \
         -o ${outdir} \
@@ -78,9 +79,9 @@ if should_run 5all; then
         -d ${datdir} \
         -sm ${seq_metadata_fpath} \
         -tm ${taxa_metadata_fpath} \
-        --pairs 0 1  1 2  3 4  5 6  7 8  9 10 \
-        -xl     0 0  0 0  0 0  0 0  0 0  0 0  \
-        -yl     0 0  0 0  0 0  0 0  0 0  0 0  \
+        --pairs 0 1  1 2  3 4  3 5  \
+        -xl     0 0  0 0  0 0  0 0  \
+        -yl     0 0  0 0  0 0  0 0  \
         -o ${outdir} \
         -v 1
 fi
@@ -91,9 +92,9 @@ if should_run 5b; then
         -d ${datdir} \
         -sm ${seq_metadata_fpath} \
         -tm ${taxa_metadata_fpath} \
-        --pairs 3 5  \
-        -xl     0 0  \
-        -yl     0 0  \
+        --pairs 3 4  \
+        -xl   -0.03 -0.01  \
+        -yl    0.01  0.03  \
         -o ${outdir} \
         -v 1
 fi
@@ -109,7 +110,7 @@ if should_run 5pymol; then
     groups=(
         "0 1"
         "1 2"
-        "3 5"
+        "3 6"
     )
     for scaffold in ${scaffolds[@]}; do
         struct_fpath=${structdir}/${f}.pdb
@@ -154,9 +155,9 @@ if should_run 6; then
         -sm ${seq_metadata_fpath} \
         -tm ${taxa_metadata_fpath} \
         --ranks phylum class \
-        --pairs 0 1  1 2  3 4  5 6  7 8  3 5  \
-        -xl     0 0  0 0  0 0  0 0  0 0  0 0  \
-        -yl     0 0  0 0  0 0  0 0  0 0  0 0  \
+        --pairs 0 1  1 2  3 4  3 5  \
+        -xl     0 0  0 0  0 0  0 0  \
+        -yl     0 0  0 0  0 0  0 0  \
         -o ${outdir} \
         -v 1
 fi
@@ -168,12 +169,13 @@ if should_run 6all; then
         -sm ${seq_metadata_fpath} \
         -tm ${taxa_metadata_fpath} \
         --ranks phylum class \
-        --pairs 0 1  1 2  3 4  5 6  7 8  9 10 \
-        -xl     0 0  0 0  0 0  0 0  0 0  0 0  \
-        -yl     0 0  0 0  0 0  0 0  0 0  0 0  \
+        --pairs 0 1  1 2  3 4  3 5  \
+        -xl     0 0  0 0  0 0  0 0  \
+        -yl     0 0  0 0  0 0  0 0  \
         -o ${outdir} \
         -v 1
 fi
+
 
 if should_run 6b; then
     outdir=${outdirbase}/fig6b
@@ -182,9 +184,9 @@ if should_run 6b; then
         -sm ${seq_metadata_fpath} \
         -tm ${taxa_metadata_fpath} \
         --ranks phylum class \
-        --pairs 3 5  \
-        -xl     0 0  \
-        -yl     0 0  \
+        --pairs 3 4  \
+        -xl     -0.03 -0.01  \
+        -yl     0.01 0.03  \
         -o ${outdir} \
         -v 1
 fi
@@ -198,8 +200,8 @@ if should_run 6pymol; then
     )
     groups=(
         "0 1"
-        "1 2"
-        "3 5"
+        # "1 2"
+        # "3 4"
     )
     for scaffold in ${scaffolds[@]}; do
         struct_fpath=${structdir}/${f}.pdb
@@ -219,13 +221,12 @@ if should_run 6pymol; then
     done
 fi
 
-
 if should_run 7; then
     outdir=${outdirbase}/fig7
     python figure_scripts/gen_fig7.py \
         -d ${datdir} \
         -o ${outdir} \
         -sd ${datdirbase}/groups \
-        -si 1 2 3 5 \
+        -si 1 2 3 4 \
         -v 1
 fi

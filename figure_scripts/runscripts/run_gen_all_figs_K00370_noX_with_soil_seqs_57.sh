@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# RUN=(1 2 3 4 5 5b 5pymol 6 6b 6pymol 7)
+RUN=(1 2 3 4 5 5b 5pymol 6 6b 6pymol 7)
 # RUN=(5 5b 6 6b)
-RUN=(5all 6all)
+# RUN=(5all 6all)
 # RUN=(5pymol 6pymol)
 
 
@@ -17,6 +17,15 @@ should_run() {
 datdirbase=out/K00370/TIGR01580_noX_with_soil_seqs_57
 outdirbase=out/figures/TIGR01580_noX_with_soil_seqs_57
 datdir=${datdirbase}/sca_results
+
+seq_metadata_fpath=data/K00370/misc/metadata_TIGR01580_noX.tsv
+taxa_metadata_fpath=data/K00370/misc/taxids_TIGR01580_metadata.tsv
+
+groups_dir=${datdirbase}/sca_groups
+scores_dir=${datdirbase}/pdb_sectors
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if should_run 1; then
     outdir=${outdirbase}/fig1
@@ -54,8 +63,8 @@ if should_run 5; then
     outdir=${outdirbase}/fig5
     python figure_scripts/gen_fig5.py \
         -d ${datdir} \
-        -sm data/K00370/misc/metadata_TIGR01580_noX.tsv \
-        -tm data/K00370/misc/taxids_TIGR01580_metadata.tsv \
+        -sm ${seq_metadata_fpath} \
+        -tm ${taxa_metadata_fpath} \
         --pairs 1 2  3 6 \
         -xl     0 0  0 0 \
         -yl     0 0  0 0 \
@@ -67,8 +76,8 @@ if should_run 5all; then
     outdir=${outdirbase}/fig5
     python figure_scripts/gen_fig5.py \
         -d ${datdir} \
-        -sm data/K00370/misc/metadata_TIGR01580_noX.tsv \
-        -tm data/K00370/misc/taxids_TIGR01580_metadata.tsv \
+        -sm ${seq_metadata_fpath} \
+        -tm ${taxa_metadata_fpath} \
         --pairs 0 1  1 2  3 4  5 6  7 8  9 10 \
         -xl     0 0  0 0  0 0  0 0  0 0  0 0  \
         -yl     0 0  0 0  0 0  0 0  0 0  0 0  \
@@ -80,11 +89,11 @@ if should_run 5b; then
     outdir=${outdirbase}/fig5b
     python figure_scripts/gen_fig5.py \
         -d ${datdir} \
-        -sm data/K00370/misc/metadata_TIGR01580_noX.tsv \
-        -tm data/K00370/misc/taxids_TIGR01580_metadata.tsv \
+        -sm ${seq_metadata_fpath} \
+        -tm ${taxa_metadata_fpath} \
         --pairs 3 6  \
-        -xl     -0.03 -0.01  \
-        -yl     0.01 0.03  \
+        -xl   -0.03 -0.01  \
+        -yl    0.01  0.03  \
         -o ${outdir} \
         -v 1
 fi
@@ -99,8 +108,8 @@ if should_run 5pymol; then
     )
     groups=(
         "0 1"
-        # "1 2"
-        # "3 6"
+        "1 2"
+        "3 6"
     )
     for scaffold in ${scaffolds[@]}; do
         struct_fpath=${structdir}/${f}.pdb
@@ -110,8 +119,8 @@ if should_run 5pymol; then
                     -s ${scaffold} \
                     -r ${pymol_reference} \
                     --pdb_dir ${structdir} \
-                    --groups_dir ${datdirbase}/sca_groups \
-                    --scores_dir ${datdirbase}/pdb_sectors \
+                    --groups_dir ${groups_dir} \
+                    --scores_dir ${scores_dir} \
                     --outdir ${outdir} \
                     --groups ${argval_groups} \
                     --show_molybdenum ${argval_multisector}
@@ -120,8 +129,7 @@ if should_run 5pymol; then
     done
 
     groups=(
-        # "0 4 5 7 8 9 10 11 12"
-        "11 12"
+        "0 1 2"
     )
     for scaffold in ${scaffolds[@]}; do
         struct_fpath=${structdir}/${f}.pdb
@@ -130,8 +138,8 @@ if should_run 5pymol; then
                 -s ${scaffold} \
                 -r ${pymol_reference} \
                 --pdb_dir ${structdir} \
-                --groups_dir ${datdirbase}/sca_groups \
-                --scores_dir ${datdirbase}/pdb_sectors \
+                --groups_dir ${groups_dir} \
+                --scores_dir ${scores_dir} \
                 --outdir ${outdir} \
                 --groups ${argval_groups} \
                 --show_molybdenum
@@ -143,8 +151,8 @@ if should_run 6; then
     outdir=${outdirbase}/fig6
     python figure_scripts/gen_fig6.py \
         -d ${datdir} \
-        -sm data/K00370/misc/metadata_TIGR01580_noX.tsv \
-        -tm data/K00370/misc/taxids_TIGR01580_metadata.tsv \
+        -sm ${seq_metadata_fpath} \
+        -tm ${taxa_metadata_fpath} \
         --ranks phylum class \
         --pairs 0 1  1 2  3 4  5 6  7 8  3 6  \
         -xl     0 0  0 0  0 0  0 0  0 0  0 0  \
@@ -157,8 +165,8 @@ if should_run 6all; then
     outdir=${outdirbase}/fig6
     python figure_scripts/gen_fig6.py \
         -d ${datdir} \
-        -sm data/K00370/misc/metadata_TIGR01580_noX.tsv \
-        -tm data/K00370/misc/taxids_TIGR01580_metadata.tsv \
+        -sm ${seq_metadata_fpath} \
+        -tm ${taxa_metadata_fpath} \
         --ranks phylum class \
         --pairs 0 1  1 2  3 4  5 6  7 8  9 10 \
         -xl     0 0  0 0  0 0  0 0  0 0  0 0  \
@@ -172,8 +180,8 @@ if should_run 6b; then
     outdir=${outdirbase}/fig6b
     python figure_scripts/gen_fig6.py \
         -d ${datdir} \
-        -sm data/K00370/misc/metadata_TIGR01580_noX.tsv \
-        -tm data/K00370/misc/taxids_TIGR01580_metadata.tsv \
+        -sm ${seq_metadata_fpath} \
+        -tm ${taxa_metadata_fpath} \
         --ranks phylum class \
         --pairs 3 6  \
         -xl     -0.03 -0.01  \
@@ -202,8 +210,8 @@ if should_run 6pymol; then
                     -s ${scaffold} \
                     -r ${pymol_reference} \
                     --pdb_dir ${structdir} \
-                    --groups_dir ${datdirbase}/sca_groups \
-                    --scores_dir ${datdirbase}/pdb_sectors \
+                    --groups_dir ${groups_dir} \
+                    --scores_dir ${scores_dir} \
                     --outdir ${outdir} \
                     --groups ${argval_groups} \
                     --show_molybdenum ${argval_multisector}
@@ -221,4 +229,3 @@ if should_run 7; then
         -si 1 2 3 6 \
         -v 1
 fi
-

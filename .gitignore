@@ -11,6 +11,8 @@ results/*/pdb_sectors/
 results/*/pymol_images/frames/
 results/*/pymol_images/**.gif
 results/*/sca_groups/
+results/TIGR01580_cutswap_with_soil_seqs_57/pdb_sectors_recorrected/
+results/TIGR01580_cutswap_with_soil_seqs_57/sca_groups_recorrected/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
