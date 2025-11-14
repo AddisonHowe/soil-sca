@@ -23,10 +23,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ S1Ahalabi s1Ahalabi_1470_nosnakes
-msafpath="data/S1Ahalabi/msas/s1Ahalabi_1470_nosnakes.aln-fasta"
+###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ S1Ahalabi s1Ahalabi_1470_nosnakes_noX
+msafpath="data/S1Ahalabi/msas/s1Ahalabi_1470_nosnakes_noX.aln-fasta"
 structdir="data/S1Ahalabi/structures"
-outdir="out/S1Ahalabi/s1Ahalabi_1470_nosnakes"
+outdir="out/S1Ahalabi/s1Ahalabi_1470_nosnakes_noX"
 gap_truncation_thresh=0.4
 sequence_gap_thresh=0.2
 reference="gi|4139558|pdb|3TGI|E__vertebrate|warm|Rattus"
