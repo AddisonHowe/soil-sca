@@ -40,10 +40,11 @@ def main(args):
     msa = AlignIO.read(msa_fpath, "fasta")
     nseq = len(msa)
     npos_msa_orig = msa.get_alignment_length()
-    print(f"Loaded MSA of shape ({nseq, npos_msa_orig})")
+    print(f"Loaded original MSA of shape ({nseq, npos_msa_orig})")
     Di = np.load(os.path.join(scadir, "conservation.npy"))
     retained_positions = np.load(os.path.join(scadir, "retained_positions.npy"))
     npos_retained = len(retained_positions)
+    print("Number of retained positions:", npos_retained)
     
     if percentile is not None:
         assert 0 < percentile and percentile <= 100
@@ -63,7 +64,7 @@ def main(args):
             raise IndexError(msg)
 
     print(f"Identifying split index within retained positions: [{start}, {end}]")
-    split_idx = np.argmax(Di[start:end])
+    split_idx = start + np.argmax(Di[start:end])
     print("Split index:", split_idx)
     
     # Need to determine which position the split index corresponds to in the 
@@ -85,12 +86,12 @@ def main(args):
         )
         records.append(new_entry)
         new_orders[entry.id] = np.concatenate([
-            split_idx + np.arange(len(seq1)), np.arange(len(seq0))
+            len(seq0) + np.arange(len(seq1)), np.arange(len(seq0))
         ])
 
     print(f"Writing results to {outfpath}")
     SeqIO.write(records, outfpath, "fasta")
-    np.savez(f"{outdir}/cutswap_seqidxs", **new_orders)
+    np.savez(f"{outdir}/{outfname.replace(".fasta", "")}.origpositions.npz", **new_orders)
     print("Done!")
 
 
