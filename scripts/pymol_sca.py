@@ -234,8 +234,9 @@ def plot_scaffold_by_sectors(
         
         # Show extra features
         if show_molybdenum:
-            _show_molybdenum("ref_struct", color=MO_COLOR)
             _show_sf4("ref_struct", color=SF4_COLOR)
+            _show_cofactor("ref_struct", color=None)
+            _show_molybdenum("ref_struct", color=MO_COLOR)
         
         # Save the primary plot
         cmd.png(f"{outdir}/{scaffold}_group{gidx}.png", dpi=300)
@@ -409,6 +410,17 @@ def _show_sf4(
     cmd.show("everything", "sf4")
     if isinstance(color, str):
         cmd.color(color, "sf4")
+    return
+
+
+def _show_cofactor(
+        struct,
+        color=None,
+):
+    cmd.select("cofactor", f"{struct}/D/A/MD1`1300/* {struct}/E/A/MD1`1301/*")
+    cmd.show("sticks", "cofactor")
+    if isinstance(color, str):
+        cmd.color(color, "cofactor")
     return
     
 
