@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 datdir=data/K00370
-seq_fname=cutswap_TIGR01580_with_soil_seqs_57.fasta
+seq_fname=TIGR01580_cutswap_with_soil_seqs_57.fasta
 out_fname=MSA_TIGR01580_cutswap_with_soil_seqs_57
 
 nthreads=16
