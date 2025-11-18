@@ -13,8 +13,6 @@ import scipy
 from scipy.spatial.distance import pdist, squareform
 import scipy.cluster.hierarchy as sch
 
-NFIGS = 4
-
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
@@ -39,14 +37,13 @@ def main(args):
     scadir = args.datdir
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
 
     fmt = "pdf"
     transparent = True
 
     # Housekeeping
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
     
 
@@ -61,6 +58,7 @@ def main(args):
     Xmsa = Xmsa.reshape([Xmsa.shape[0], -1, naas])
 
     # Generate plots
+    printv("RUNNING FIG1")
     printv("Generating plots...")
 
     saveas = "gap_freq_by_position"
@@ -74,7 +72,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = "sequence_similarity"
     bbox_inches = "tight"
@@ -87,7 +84,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = "reference_similarity"
     bbox_inches = None
@@ -100,7 +96,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = "taxonomic_makeup"
     bbox_inches = None
@@ -113,9 +108,7 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
     
-    pbar.close()
     print("Done!")
 
 

@@ -13,7 +13,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import tqdm as tqdm
 import json
 
-NFIGS = 1
 
 variant_groups4_fpath = f"data/K00370/misc/assignments_K00370_v2.tsv"
 variant_groups8_fpath = f"data/K00370/misc/assignments_K00370_v3.tsv"
@@ -58,7 +57,7 @@ def main(args):
     outdir = args.outdir
     sector_dir = args.sector_dir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
     sector_idxs = args.sector_idxs
 
     fmt = "pdf"
@@ -66,8 +65,9 @@ def main(args):
 
     # Housekeeping
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
+
+    printv("RUNNING FIG7")
 
     # Load data
     msa_fname = "msa.npy"
@@ -213,7 +213,6 @@ def main(args):
                 transparent=transparent,
                 bbox_inches=bbox_inches, 
             )
-    pbar.update(1)
 
     saveas = "pc1pc2_sector_{}"
     bbox_inches = None
@@ -227,7 +226,6 @@ def main(args):
                 transparent=transparent,
                 bbox_inches=bbox_inches, 
             )
-    pbar.update(1)
 
     saveas = "pc1pc2_bygroup_{}_sector_{}"
     bbox_inches = None
@@ -242,9 +240,7 @@ def main(args):
                 transparent=transparent,
                 bbox_inches=bbox_inches, 
             )
-    pbar.update(1)
     
-    pbar.close()
     print("Done!")
     
     return

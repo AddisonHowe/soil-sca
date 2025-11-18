@@ -8,8 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tqdm as tqdm
 
-NFIGS = 2
-
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
@@ -34,14 +32,13 @@ def main(args):
     scadir = args.datdir
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
 
     fmt = "pdf"
     transparent = True
 
     # Housekeeping
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
 
 
@@ -62,7 +59,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = ""
     bbox_inches = None
@@ -75,9 +71,7 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
     
-    pbar.close()
     print("Done!")
 
 

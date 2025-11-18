@@ -16,7 +16,6 @@ import tqdm as tqdm
 
 from mysca.constants import VARIANT_GROUP_COLORS, SECTOR_COLORS
 
-NFIGS = 2
 
 variant_groups4_fpath = f"data/K00370/misc/assignments_K00370_v2.tsv"
 variant_groups8_fpath = f"data/K00370/misc/assignments_K00370_v3.tsv"
@@ -53,7 +52,7 @@ def main(args):
     tax_metadata_fpath = args.tax_metadata_fpath
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
     pairs = args.pairs
     xlims = args.xlims
     ylims = args.ylims
@@ -87,8 +86,9 @@ def main(args):
         ylims = np.array(ylims).reshape([-1, 2])
     
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
+    
+    printv("RUNNING FIG5")
 
 
     # Load data
@@ -228,7 +228,6 @@ def main(args):
                     xlim=xlim,
                     ylim=ylim,
                 )
-    pbar.update(1)
 
     saveas = "sca_matrix_sector_subsets"
     bbox_inches = "tight"
@@ -242,9 +241,7 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
     
-    pbar.close()
     print("Done!")
 
 

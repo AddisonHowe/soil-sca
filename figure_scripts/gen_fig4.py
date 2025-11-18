@@ -18,8 +18,6 @@ import json
 
 from mysca.constants import SECTOR_COLORS
 
-NFIGS = 2
-
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
@@ -44,14 +42,13 @@ def main(args):
     scadir = args.datdir
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
 
     fmt = "pdf"
     transparent = True
 
     # Housekeeping
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
 
     # Load data
@@ -68,6 +65,7 @@ def main(args):
         groups.append(msapos_to_groupidx[0,idxs])    
 
     # Generate plots
+    printv("RUNNING FIG4")
     printv("Generating plots...")
 
     saveas = "t_dist_ic{}"
@@ -82,7 +80,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = "sca_matrix_sector_subsets"
     bbox_inches = "tight"
@@ -96,9 +93,7 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
     
-    pbar.close()
     print("Done!")
 
 

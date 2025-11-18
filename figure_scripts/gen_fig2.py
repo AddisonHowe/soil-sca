@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 plt.style.use("figure_scripts/styles/fig.mplstyle")
 import tqdm as tqdm
 
-NFIGS = 4
-
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
@@ -35,14 +33,13 @@ def main(args):
     scadir = args.datdir
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
 
     fmt = "pdf"
     transparent = True
 
     # Housekeeping
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
 
 
@@ -58,6 +55,7 @@ def main(args):
     eigenvalue_cutoff = np.genfromtxt(f"{scadir}/eigenvalue_cutoff.txt")
 
     # Generate plots
+    printv("RUNNING FIG2")
     printv("Generating plots...")
 
     saveas = "positional_conservation"
@@ -72,7 +70,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = "conservation"
     bbox_inches = "tight"
@@ -99,7 +96,6 @@ def main(args):
             bbox_inches=bbox_inches,
             figsize=(2.53, 2.16) 
         )
-    pbar.update(1)
 
     saveas = "sca_shuffling_distribution"
     bbox_inches = None
@@ -112,7 +108,6 @@ def main(args):
             transparent=transparent,
             bbox_inches=bbox_inches, 
         )
-    pbar.update(1)
 
     saveas = "sca_matrix_spectrum_vs_null"
     bbox_inches = "tight"
@@ -126,10 +121,7 @@ def main(args):
             bbox_inches=bbox_inches, 
             figsize=(3, 2.38)
         )
-    pbar.update(1)
     
-
-    pbar.close()
     print("Done!")
 
 

@@ -32,7 +32,7 @@ def main(args):
     scadir = args.datdir
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
 
     NFIGS = 2
     fmt = "pdf"

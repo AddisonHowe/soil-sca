@@ -48,6 +48,8 @@ def parse_args(args):
     parser.add_argument("--scores_dir", type=str, default=None)
     parser.add_argument("--views", action="store_true")
     parser.add_argument("--animate", action="store_true")
+    parser.add_argument("--nframes", type=int, default=None)
+    parser.add_argument("--duration", type=float, default=None)
     parser.add_argument("--show_molybdenum", action="store_true")
     parser.add_argument("-o", "--outdir", type=str, default=None)
     parser.add_argument("-v", "--verbosity", type=int, default=1)
@@ -68,6 +70,8 @@ def main(args):
     verbosity = args.verbosity
     views = args.views
     animate = args.animate
+    nframes = args.nframes
+    duration = args.duration
 
     if ref_scaffold is None or ref_scaffold.lower() == "none":
         ref_scaffold = None
@@ -160,6 +164,8 @@ def main(args):
             show_molybdenum=show_molybdenum,
             views=views,
             animate=animate,
+            nframes=nframes,
+            duration=duration,
             outdir=outdir, 
             verbosity=verbosity,
         )
@@ -179,8 +185,12 @@ def plot_scaffold_by_sectors(
         scores_dir=None,
         show_molybdenum=False,
         views=True,
-        animate=False,
+        animate=False, 
+        **kwargs
 ):
+    nframes = kwargs.get("nframes", 24)
+    duration = kwargs.get("duration", 2.4)
+    
     gdir = f"{groups_basedir}"
     if outdir:
         os.makedirs(outdir, exist_ok=True)
@@ -254,14 +264,13 @@ def plot_scaffold_by_sectors(
         # Save animation
         if animate:
             RAY_FIRST = 1  # Better quality if 1. Faster if 0.
-            n_frames = 24  # 15 degrees per frame
-            seconds_per_frame = 0.1
+            seconds_per_frame = duration / nframes
             
             framesdir = f"{outdir}/frames/{scaffold}_group{gidx}_frames"
             os.makedirs(framesdir, exist_ok=True)
 
-            for i in tqdm.trange(n_frames, leave=False):
-                cmd.turn("y", 360 / n_frames)
+            for i in tqdm.trange(nframes, leave=False):
+                cmd.turn("y", 360 / nframes)
                 filename = os.path.join(framesdir, f"frame_{i:03d}.png")
                 cmd.png(
                     filename, 
@@ -271,7 +280,7 @@ def plot_scaffold_by_sectors(
             
             # Combine frames into a GIF
             frames = []
-            for i in range(n_frames):
+            for i in range(nframes):
                 path = os.path.join(framesdir, f"frame_{i:03d}.png")
                 im = Image.open(path).convert("RGBA")
                 # Flatten the transparent background to white
@@ -366,8 +375,10 @@ def plot_scaffold_with_multiple_sectors(
 
     # Show extra features
     if show_molybdenum:
-        _show_molybdenum("ref_struct", color=MO_COLOR)
         _show_sf4("ref_struct", color=SF4_COLOR)
+        _show_cofactor("ref_struct", color=None)
+        _show_molybdenum("ref_struct", color=MO_COLOR)
+        
 
     # Save the primary plot
         cmd.png(f"{outdir}/{scaffold}_groups_{",".join(

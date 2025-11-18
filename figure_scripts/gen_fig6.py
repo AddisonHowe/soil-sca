@@ -15,7 +15,6 @@ import tqdm as tqdm
 
 from mysca.constants import VARIANT_GROUP_COLORS, SECTOR_COLORS
 
-NFIGS = 1
 
 variant_groups4_fpath = f"data/K00370/misc/assignments_K00370_v2.tsv"
 variant_groups8_fpath = f"data/K00370/misc/assignments_K00370_v3.tsv"
@@ -40,6 +39,7 @@ def parse_args(args):
     parser.add_argument("-p", "--pairs", type=int, nargs="*", default=None)
     parser.add_argument("-xl", "--xlims", type=float, nargs="*", default=None)
     parser.add_argument("-yl", "--ylims", type=float, nargs="*", default=None)
+    parser.add_argument("--legend", action="store_true")
     return parser.parse_args(args)
 
 
@@ -59,11 +59,12 @@ def main(args):
     tax_metadata_fpath = args.tax_metadata_fpath
     outdir = args.outdir
     verbosity = args.verbosity
-    disable_pbar = args.disable_pbar
+    disable_pbar = True
     ranks = args.ranks if args.ranks else DEFAULT_RANKS
     pairs = args.pairs
     xlims = args.xlims
     ylims = args.ylims
+    include_legend = args.legend
 
     fmt = "pdf"
     transparent = True
@@ -71,8 +72,9 @@ def main(args):
     # Housekeeping
     assert isinstance(ranks, list), "Arg ranks should be a list of strings"
     os.makedirs(outdir, exist_ok=True)
-    pbar = tqdm.tqdm(desc="Plotting", total=NFIGS, disable=disable_pbar)
     printv = get_printv(verbosity, pbar_default=not disable_pbar)
+
+    printv("RUNNING FIG6")
 
 
     # Load data
@@ -229,11 +231,9 @@ def main(args):
                         figsize=FIGSIZE, 
                         xlim=xlim,
                         ylim=ylim, 
-                        legend=False,
+                        legend=include_legend,
                     )
-    pbar.update(1)
     
-    pbar.close()
     print("Done!")
 
 
@@ -325,6 +325,24 @@ def make_subplot_jointplots(
         g.ax_joint.set_xlim(*xlim)
     if ylim is not None:
         g.ax_joint.set_ylim(*ylim)
+    
+    # xtlabs = g.ax_joint.get_xticklabels()
+    # ytlabs = g.ax_joint.get_yticklabels()
+    # g.ax_joint.set_xticklabels(
+    #     [l if (i == 0 or i == len(xtlabs)) - 1 else "" 
+    #      for i, l  in enumerate(xtlabs)]
+    # )
+    # g.ax_joint.set_yticklabels(
+    #     [l if (i == 0 or i == len(ytlabs)) - 1 else "" 
+    #      for i, l  in enumerate(ytlabs)]
+    # )
+    # g.ax_joint.set_xticks(
+    #     [g.ax_joint.get_xticks()[1], g.ax_joint.get_xticks()[-2]]
+    # )
+    # g.ax_joint.set_yticks(
+    #     [g.ax_joint.get_yticks()[1], g.ax_joint.get_yticks()[-2]]
+    # )
+
 
     # Save and close
     saveas = saveas.format(
