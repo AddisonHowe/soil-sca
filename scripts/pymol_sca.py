@@ -188,8 +188,12 @@ def plot_scaffold_by_sectors(
         animate=False, 
         **kwargs
 ):
-    nframes = kwargs.get("nframes", 24)
-    duration = kwargs.get("duration", 2.4)
+    nframes = kwargs.get("nframes", None)
+    duration = kwargs.get("duration", None)
+    if nframes is None:
+        nframes = 24
+    if duration is None:
+        duration = 2.4
     
     gdir = f"{groups_basedir}"
     if outdir:
